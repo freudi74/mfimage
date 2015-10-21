@@ -7,6 +7,8 @@ There are also manipulation routines (flip, rotation, separation, combination, l
 
 Writing images is limitted to some formats, at least in the initial version. The best implemented format for writing images to disk is tiff, which by design allows flexible, lossless, compressed and multi-page images - everything one could ask for!
 
+Its design goals are to be as operating system independant as possible, easy to use and maintain, high performance capable. And of course dealing with colors in the "right" way, allowing an ICC workflow to be built ontop of it, giving you all the required information from the image file you need for that at a small footprint.
+
 The original purpose of this library was to be the backend for image reading/writing/manipulation of the mfscan sane frontend.
 
 # Features:
@@ -16,8 +18,38 @@ The original purpose of this library was to be the backend for image reading/wri
 - Using wide-spread standard and de-facto standard image format libraries like GIFLIB, libtiff-4, libjpeg-turbo, openJpeg, libpng.
 - Wide range support for subformats (for example CMYK JPEG, TIF Compressions, ...)
 
+# Supported Image File formats:
+File Format | Read | Write
+------------|------|------
+TIFF | :white_check_mark: | :white_check_mark: 
+JPEG | :white_check_mark: | :clipboard:
+JP2  | :white_check_mark: | :clipboard:
+PNG  | :white_check_mark: | :white_check_mark: 
+BMP  | :white_check_mark: | :white_check_mark: 
+PCX  | :white_check_mark: | :white_medium_small_square:
+TGA  | :white_check_mark: | :white_medium_small_square:
+PSD  | :clipboard: | :white_medium_small_square:
+PDF  | :clipboard: | :white_medium_small_square:
+EPS  | :clipboard: | :white_medium_small_square:
+:clipboard: = planned
+
+## Sub-Formats fupported for reading
+###TIFF
+Color Model | BitDepth | AlphaChannel
+------------|----------|-------------
+Monochrome | 1, 4, 8, 16 | :white_check_mark:
+RGB | 8, 16 | :white_check_mark:
+RGB Palette | 4, 8 | :white_check_mark:
+CMYK | 8, 16 | :white_check_mark:
+CIEL*a*b* | :clipboard: | :clipboard:
+
+Compression: Uncompressed, RLE, FaxG3, FaxG4, LZW, JPEG, Deflate, Packbits, Thunderscan, LZMA2
+Organisation: Continguos, Planar, Stripes, Tiles (Planar+Stripes does not work yet)
+Multipage: :white_check_mark:
+
+
 # Language & Operating system:
-The library is internally written in C++(11), but also will have an external C-interface to simplify usage from other languages and for Windows dlls. Its design goals are to be as operating system independant as possible, easy to use and maintain, high performance capable. And of course dealing with colors in the "right" way, allowing an ICC workflow to be built ontop of it.
+The library is internally written in C++(11), but also comes with an external C-interface to simplify usage from other languages and for Windows dlls.
 
 # License
 Dual-license: GPLv3, commercial license available.
