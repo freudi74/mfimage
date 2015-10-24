@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CodeLite_Workspace Name="libmfimage" Database="">
+  <!--  <Project Name="test-mfimage" Path="test-mfimage.project" Active="Yes"/> -->
+  <Environment>
+    <![CDATA[]]>
+  </Environment>
+  <Project Name="mfimage" Path="../../src/mfimage.project" Active="Yes"/>
+  <BuildMatrix>
+    <WorkspaceConfiguration Name="Debug" Selected="yes">
+      <Project Name="mfimage" ConfigName="Debug"/>
+      <Project Name="mfimage" ConfigName="Debug"/>
+    </WorkspaceConfiguration>
+    <WorkspaceConfiguration Name="Release" Selected="yes">
+      <Project Name="mfimage" ConfigName="Release"/>
+      <Project Name="mfimage" ConfigName="Release"/>
+    </WorkspaceConfiguration>
+  </BuildMatrix>
+</CodeLite_Workspace>

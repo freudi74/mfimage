@@ -1,0 +1,70 @@
+real Multi-Image import GIF+TIFF (gif first, might be more complex for code due to "disposalMethod") - partially done (reading image x)
+
+JPEG write
+GIF Write
+PNG Write
+JPEG2000 write
+JPEG2000 read options (colorspaces, tiles?)
+
+Write parameter
+Read parameter
+
+EXIF and co.?
+
+
+Unterstütze Format:
+---------------------
+TIF:	
+- Reads all baseline tiffs, except for "mask only" and ignores "grey response curve" (obsoleted by Tiff version 6)
+- Beyond baseline tiff, it also reads:
+  - "SEPARATED" photometric as CMYK if "INKSET_CMYK" is present in TIFFTAG_INKSET, and assumes CMYK if TIFFTAG_INKSET is omitted and there are at least 4 samples per pixel
+  - alpha-mask (EXTRASAMPLE_ASSOCALPHA) from extraSamples.
+  - can apply halftonehints (TIFFTAG_HALFTONEHINTS)
+  - tiled tiffs (only completely, not partial tiles) - tiled+planar untested, probably doesn't work (rare combination)
+  
+  
+that is:
+	RGB (contig & planar):
+		8 bits per sample with/without ALPHA mask
+		16 bits per sample with/without ALPHA mask
+	RGB-Palette or indexed
+		16 color (4 bits per sample) RGB palette 8/16 bits per sample - no ALPHA mask!  -- UNTESTED
+		256 color (8 bits per sample) RGB palette 8/16 bits per sample - no ALPHA mask!
+	GRAY / Black&White:
+		16 bits per sample w/wo alpha (alpha untested)
+		8 bits per sample w/wo alpha (alpha untested)
+		4 bits per sample w/wo alpha (alpha untested) -- UNTESTED
+		1 bits per sample ("bilevel")- w/wo alpha (alpha untested)
+	CMYK (contig & planar):
+		8 bits per sample with/without ALPHA mask
+		16 bits per sample with/without ALPHA mask
+	writes:
+		RGB 8/16 w+w/o Alpha mask
+		CMYK 8/16 w+w/o Alpha mask
+		GRAY 8/16 w+w/o Alpha mask
+		- ONLY WRITES Contigous, not planar!
+
+does NOT support:
+- other than 8 or 16 bits per sample at this time (except for Gray 1+4 bits per sample).
+----------------------------
+TIFF todo: 
+- Read number of pages in multipage tiff without reading all files ?
+- float rgb, gray + CMYK (+float in image)
+- CIELab TIFF (read+write+internal in image)
+
+=====================
+PNG: reads all pngs formats and flags
+=====================
+- BMP write with RLE
+- BMP test monochrome
+=======================
+PCX: reads 8 bit VGA palette, 8 bit gray, 24bit RGB (untested), RLE or uncompressed. 1,2,4 bit not supported, Alpha Masks not supported. V5 only.
+=======================
+TGA: ???
+=======================
+GIF: All gifs
+=======================
+JPEG: All known other than unspecified Alpha extension.
+=======================h
+JPEG2000: currently only srgb, gray, cmyk is read right. Only JP2 works. No Alpha.
+THere's a lot of stuff left to do (color space convertion?, Alpha channel, dpi, tiles?).
