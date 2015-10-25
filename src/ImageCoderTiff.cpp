@@ -18,26 +18,7 @@
 
 ImageCoderTiff::ImageCoderTiff(Image* img) : ImageCoder(IE_TIFF, img)
 {
-/*	ImageCoderParameter* pNew;
-	
-	// used for saving only
-	EncoderParameter( EncoderParameter::ID::TIFF_Compression, TIFF_Compression::NONE );
-	pNew = ImageCoderParameter::createParameter( ImageCoderParameterType::TIFF_Compression );
-	pNew->setValue(  );
-	addParameter( pNew );
-
-	// used for saving only (and not even that, yet!)
-	pNew = ImageCoderParameter::createParameter( ImageCoderParameterType::TIFF_PlanarConfig );
-	pNew->setValue( ImageCoderParameter_TIFF_PlanarConfig::CHUNKS );
-	addParameter( pNew );
-
-	// apply halftone hints ?
-	pNew = ImageCoderParameter::createParameter( ImageCoderParameterType::TIFF_HalftoneHints );
-	pNew->setValue( ImageCoderParameter_TIFF_HalftoneHints::APPLY );
-	addParameter( pNew );
-*/
 }
-
 
 ImageCoderTiff::~ImageCoderTiff()
 {

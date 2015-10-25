@@ -95,7 +95,7 @@ void ImageCoderJpeg2000::read(const std::string & filename )
 		/* set decoding parameters to default values */
 		opj_set_default_decoder_parameters(&parameters);
 
-#if 0
+#if 1
 		/* read the input file and put it in memory */
 		/* ---------------------------------------- */
 		l_stream = opj_stream_create_default_file_stream( filename.data(), 1 );
@@ -229,7 +229,7 @@ void ImageCoderJpeg2000::read(const std::string & filename )
 		bool isCMYK = false;
 		bool isGray = false;
 		uint32_t bpc = 8;
-		bool hasAlpha = false;
+		bool hasAlpha = true;
 		size_t numComps = 0;
 		switch ( opj_image->color_space ) {
 		case OPJ_CLRSPC_SRGB:
@@ -271,6 +271,9 @@ void ImageCoderJpeg2000::read(const std::string & filename )
 		size_t width  = opj_image->x1 - opj_image->x0;
 		size_t height = opj_image->y1 - opj_image->y0;
 		
+		props->offsetPixels[0] = opj_image->x0;
+		props->offsetPixels[1] = opj_image->y0;
+		
 		uint32_t bppMax = 0;
 		for ( size_t iComp=0; iComp<numComps; iComp++ )
 		{
@@ -290,15 +293,18 @@ void ImageCoderJpeg2000::read(const std::string & filename )
 		// icc profile
 		if ( opj_image->icc_profile_buf && opj_image->icc_profile_len )
 		{
-			// embedded icc
-			getIccProfile().assign(reinterpret_cast<char*>(opj_image->icc_profile_buf), opj_image->icc_profile_len);
+			// embedded icc --- this doesn't work!!! Something is going on with openJPEG in this aspect, I assume
+			// it is already used to translate YCbCr to RGB. 
+//			getIccProfile().assign(reinterpret_cast<char*>(opj_image->icc_profile_buf), opj_image->icc_profile_len);
+// 			props->embeddedIccProfile = true;
 		}
 		else if ( opj_image->color_space == OPJ_CLRSPC_SRGB )
 		{
 			// explicitely sRGB
-			ColorManager cms;
-			cmsHPROFILE profile = cms.createSrgbProfile();
-			cms.embeddProfile(image, profile);
+			props->colorSpaceIsSRGB = true;
+//			ColorManager cms;
+//			cmsHPROFILE profile = cms.createSrgbProfile();
+// 			cms.embeddProfile(image, profile);
 //			cms.closeProfile(profile);
 		}
 
