@@ -359,8 +359,9 @@ void ImageCoderTiff::read( const std::string & filename )
 			// - extraAlphaSample >= 0 -> extra channel index is alpha
 			/////////////////////////
 			int extraAlphaSample = -1;
+			uint16_t extraSampleCount = 0;
 			{
-				uint16_t extraSampleCount = 0;
+//				uint16_t extraSampleCount = 0;
 				uint16_t *extraSampleTypes;
 				if ( TIFFGetField(tif, TIFFTAG_EXTRASAMPLES, &extraSampleCount, &extraSampleTypes) && extraSampleCount && extraSampleTypes )
 				{
@@ -387,26 +388,46 @@ void ImageCoderTiff::read( const std::string & filename )
 			// this is the "easiest" way, also it's counter the idea of tiles:
 			// to read a partial image!
 			std::unique_ptr<uint8_t[]> tiledImageBuffer;
+			_tiles_planeSize = 0;
+			_tiles_numPlanes = 0;
 			if ( tiled ) 
 			{
-				tdata_t bufSingleTile = _TIFFmalloc(TIFFTileSize(tif));
-				tmsize_t scanlinesize = TIFFScanlineSize(tif);
-				tmsize_t tilelinesize = TIFFTileRowSize(tif);
-				tiledImageBuffer.reset( new uint8_t[height*scanlinesize] );
-				for (uint32_t y0 = 0; y0 < height; y0 += tileLength)
+				size_t   totalTileSize = TIFFTileSize(tif);
+				tdata_t  bufSingleTile = _TIFFmalloc(totalTileSize);
+				tmsize_t scanlinesize  = TIFFScanlineSize(tif);
+				tmsize_t tilelinesize  = TIFFTileRowSize(tif);
+				// note that for a planar configuration, each tile contains one PLANE only... So our total buffer needs to increaase for planar config
+				_tiles_numPlanes = 1;
+				_tiles_planeSize = height*scanlinesize;
+				if ( isSeparated )
 				{
-					size_t tileLineStartByte = 0;
-					for (uint32_t x0 = 0; x0 < width; x0 += tileWidth)
+//					_tiles_numPlanes = samplesPerPixel + (( extraAlphaSample!=-1 ) ? 1 : 0 );
+					_tiles_numPlanes = samplesPerPixel + extraSampleCount;
+				}
+				tiledImageBuffer.reset( new uint8_t[_tiles_planeSize*_tiles_numPlanes] );
+				
+				for (size_t iPlane=0; iPlane<_tiles_numPlanes; iPlane++ )
+				{
+					// planeIndex is the index of the plane in the TIFF file.
+					// our internal index is iPlane.
+					uint16_t planeIndex = iPlane; //(iPlane>=samplesPerPixel) ? extraAlphaSample : iPlane; 
+					size_t internalPlaneOffset = _tiles_planeSize*iPlane;
+					
+					for (uint32_t y0 = 0; y0 < height; y0 += tileLength)
 					{
-						TIFFReadTile( tif, bufSingleTile, x0, y0, 0, 0); // read a complete tile to bufSingleTile --- NOT TESTED FOR PLANAR + TILES
-						uint8_t* bufLine = reinterpret_cast<uint8_t*>(bufSingleTile);					
-						size_t thisTileLineSize = std::min( (unsigned long)(scanlinesize-tileLineStartByte), (unsigned long)tilelinesize );
-						for ( uint32_t y=y0; y<std::min(height,y0+tileLength); y++ )
+						size_t tileLineStartByte = 0;
+						for (uint32_t x0 = 0; x0 < width; x0 += tileWidth)
 						{
-							std::memcpy( tiledImageBuffer.get()+y*scanlinesize+tileLineStartByte, bufLine, thisTileLineSize );
-							bufLine += tilelinesize;
+							TIFFReadTile( tif, bufSingleTile, x0, y0, 0, planeIndex); // read a complete tile to bufSingleTile (or tiles plane in planar config)
+							uint8_t* bufLine = reinterpret_cast<uint8_t*>(bufSingleTile);					
+							size_t thisTileLineSize = std::min( (unsigned long)(scanlinesize-tileLineStartByte), (unsigned long)tilelinesize );
+							for ( uint32_t y=y0; y<std::min(height,y0+tileLength); y++ )
+							{
+								std::memcpy( tiledImageBuffer.get()+internalPlaneOffset+y*scanlinesize+tileLineStartByte, bufLine, thisTileLineSize );
+								bufLine += tilelinesize;
+							}
+							tileLineStartByte += tilelinesize;
 						}
-						tileLineStartByte += tilelinesize;
 					}
 				}
 				_TIFFfree( bufSingleTile );
@@ -526,11 +547,11 @@ void ImageCoderTiff::read( const std::string & filename )
 }
 
 // same as TiffReadScanLine, but reads line either from tiled image buffer or actually calls TiffReadScanLine
-inline static int readscanline(TIFF* tif, uint8_t* tiledImageBuffer, size_t scanlinesize, void* dest, uint32_t row, tsample_t sample=0 )
+int ImageCoderTiff::readscanline(TIFF* tif, uint8_t* tiledImageBuffer, size_t scanlinesize, void* dest, uint32_t row, uint16_t sample/*=0*/ )
 {
 	if ( tiledImageBuffer )
 	{
-		std::memcpy( dest, tiledImageBuffer+scanlinesize*row, scanlinesize );
+		std::memcpy( dest, tiledImageBuffer + _tiles_planeSize*sample + scanlinesize*row, scanlinesize );
 		return 0;
 	}
 	else

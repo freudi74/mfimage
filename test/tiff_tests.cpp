@@ -74,15 +74,36 @@ SUITE(TiffSuite)
 		END_TEST();
 	}
 
-	TEST(Tiles)
+	TEST(Tiles_Contig)
 	{
 		START_TEST();
-		std::list<std::string> testFileNames = { "cramps.tif", "cramps-tile.tif" };
+		std::list<std::string> testFileNames = { 
+			"cramps.tif", // stripes --- just for reference, should look the same as cramps-tile.tif
+			"cramps-tile.tif" // tiles 
+			};
 		Image img; 
 		for ( std::string & testFileName : testFileNames )
 		{
 			img.read( TEST_2_FILES + testFileName, 1 );
 			img.write( TEST_2_OUT + testFileName + ".bmp", IE_BMP );
+		}		
+		END_TEST();
+	}
+
+	TEST(Tiles_Separated)
+	{
+		START_TEST();
+		std::list<std::string> testFileNames = { 
+			"tiger-rgb-tile-contig-08.tif", 
+			"tiger-rgb-tile-contig-16.tif", 
+			"tiger-rgb-tile-planar-08.tif", 
+			"tiger-rgb-tile-planar-16.tif" 
+		};
+		Image img; 
+		for ( std::string & testFileName : testFileNames )
+		{
+			img.read( TEST_2_FILES "tiger" SEPARATOR + testFileName, 1 );
+			img.write( TEST_2_OUT  "tiger" SEPARATOR + testFileName + ".tif", IE_TIFF );
 		}		
 		END_TEST();
 	}
@@ -174,9 +195,10 @@ SUITE(TiffSuite)
 			"flower-separated-planar-08.tif", 
 			"flower-separated-planar-16.tif" 
 		};
-		Image img; 
+
 		for ( std::string & testFileName : testFileNames )
 		{
+			Image img;
 			img.read( TEST_2_FILES "depth" SEPARATOR + testFileName, 1 );
 			img.write( TEST_2_OUT "depth" SEPARATOR + testFileName + ".tif", IE_TIFF );
 		}		

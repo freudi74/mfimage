@@ -22,7 +22,7 @@ SUITE(Jpeg2000Suite)
 			"balloon.jp2"
 		};
 		Image img; 
-		for ( int i=0; i<50; i++ )
+//		for ( int i=0; i<50; i++ )
 		for ( std::string & testFileName : testFileNames )
 		{
 			img.read( TEST_FILES + testFileName, 1 );
