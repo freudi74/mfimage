@@ -19,3 +19,5 @@ void createFolder(const char* folder)
 {
 //	fs::create_directories( folder );
 }
+
+double total_test_time = 0;

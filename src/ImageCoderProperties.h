@@ -13,10 +13,10 @@ public:
 	int32_t  offsetPixels[2]       = {0};    // R - position offset in píxels
 	
 	// flags on how to read/write the file
-	bool     applyHalftoneHints = true;       // W - obey halft tone hints during read (TIFF)
-	bool     separatedPlanes    = false;      // W - Write file in planar order ? Tiff only
-	uint32_t compression        = 1;          // W - compression type, encoder specific
-	double   quality            = 0.9;        // W - quality for lossy compressions (Jpeg, Jpeg2000)
+	bool     applyHalftoneHintsOnRead = true;       // W - obey halft tone hints during read (TIFF)
+	bool     writeSeparatedPlanes     = false;      // W - Write file in planar order ? Tiff only
+	uint32_t compression              = 1;          // W - compression type, encoder specific
+	double   quality                  = 0.9;        // W - quality for lossy compressions (Jpeg, Jpeg2000)
 } ImageCoderProperties;
 
 

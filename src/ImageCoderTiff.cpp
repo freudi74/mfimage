@@ -56,7 +56,7 @@ bool ImageCoderTiff::canEncode( PixelMode pixelMode )
 void ImageCoderTiff::write(const std::string & filename)
 {
 	uint16_t compression = static_cast<uint16>( props->compression );
-	uint16_t planarConfiguartion = props->separatedPlanes ? PLANARCONFIG_SEPARATE : PLANARCONFIG_CONTIG;
+	uint16_t planarConfiguartion = props->writeSeparatedPlanes ? PLANARCONFIG_SEPARATE : PLANARCONFIG_CONTIG;
 	// todo: allow to write planar files. Not yet implemented.
 
 	TIFF* tif = TIFFOpen(filename.c_str(), "w");
@@ -89,25 +89,26 @@ void ImageCoderTiff::write(const std::string & filename)
 		if (!TIFFSetField(tif, TIFFTAG_COMPRESSION, compression ))
 			throw std::runtime_error("failed to write tiff");
 
-		if (!TIFFSetField(tif, TIFFTAG_PLANARCONFIG, PLANARCONFIG_CONTIG))
+		if (!TIFFSetField(tif, TIFFTAG_PLANARCONFIG, planarConfiguartion))
 			throw std::runtime_error("failed to write tiff");
 
-		int16_t bpp;
-		int16_t pmi;
-		int16_t spp;
+		uint16_t bpp;
+		uint16_t pmi;
+		uint16_t spp;
 		bool alpha = false;
+		bool internalAlphaPlaneReorder = false;
 
 		switch (image->getPixelMode())
 		{
 		// todo: AGRAY and CMYKA!
 		case PixelMode::GRAY8:   bpp = 8;  spp = 1; pmi = PHOTOMETRIC_MINISBLACK; break;
 		case PixelMode::GRAY16:  bpp = 16; spp = 1; pmi = PHOTOMETRIC_MINISBLACK; break;
-		case PixelMode::AGRAY8:  bpp = 8;  spp = 2; pmi = PHOTOMETRIC_MINISBLACK; alpha = true;	break;
-		case PixelMode::AGRAY16: bpp = 16; spp = 2; pmi = PHOTOMETRIC_MINISBLACK; alpha = true;	break;
+		case PixelMode::AGRAY8:  bpp = 8;  spp = 2; pmi = PHOTOMETRIC_MINISBLACK; internalAlphaPlaneReorder=true; alpha = true;	break;
+		case PixelMode::AGRAY16: bpp = 16; spp = 2; pmi = PHOTOMETRIC_MINISBLACK; internalAlphaPlaneReorder=true; alpha = true;	break;
 		case PixelMode::RGB8:    bpp = 8;  spp = 3; pmi = PHOTOMETRIC_RGB;        break;
 		case PixelMode::RGB16:   bpp = 16; spp = 3; pmi = PHOTOMETRIC_RGB;        break;
-		case PixelMode::ARGB8:   bpp = 8;  spp = 4; pmi = PHOTOMETRIC_RGB;        alpha = true;	break;
-		case PixelMode::ARGB16:  bpp = 16; spp = 4; pmi = PHOTOMETRIC_RGB;        alpha = true;	break;
+		case PixelMode::ARGB8:   bpp = 8;  spp = 4; pmi = PHOTOMETRIC_RGB;        internalAlphaPlaneReorder=0; alpha = true;	break;
+		case PixelMode::ARGB16:  bpp = 16; spp = 4; pmi = PHOTOMETRIC_RGB;        internalAlphaPlaneReorder=0; alpha = true;	break;
 		case PixelMode::CMYK8:   bpp = 8;  spp = 4; pmi = PHOTOMETRIC_SEPARATED;  break;
 		case PixelMode::CMYK16:  bpp = 16; spp = 4; pmi = PHOTOMETRIC_SEPARATED;  break;
 		case PixelMode::CMYKA8:  bpp = 8;  spp = 5; pmi = PHOTOMETRIC_SEPARATED;  alpha = true;	break;
@@ -164,94 +165,129 @@ void ImageCoderTiff::write(const std::string & filename)
 			throw std::runtime_error("failed to write tiff");
 
 		// WRITING IMAGE DATA
-		// We will use most basic image data storing method provided by the library to write the data into the file, 
-		// this method uses strips, and we are storing a line(row) of pixel at a time.This following code writes the data from the char array image into the file :
+		// Note that we don't support writing tiles ...
+		// Further note that the planar mode is a bit tricky; you need to write all LINES of one PLANE first ... 
+		// There's no random access in the way it's written.
 
-		size_t linebytes = spp * image->getWidth() * (bpp/8);   // length of one row of pixel in the image'in bytes
-		std::unique_ptr<char[]> lineBuffer(new char[linebytes]);	// needed for pixel organizations that we can't directly write to the file... Alpha and planar
+		size_t bypp = bpp/8;
+		uint32_t planarLineLength = image->getWidth() * bypp;
+		uint32_t linebytes = spp * planarLineLength;   // in planar config, each line one after the other ...
+		std::unique_ptr<char[]> lineBuffer( new char[linebytes] );	// needed for pixel organizations that we can't directly write to the file... Alpha and planar. ANd actually, for planar, the size is too big.
 
-		// We set the strip size of the file to be size of one row of pixels ... TODO: is that right? "ROWSPERSTRIP" sounds like ... well, like rows per strip !
-		uint32_t rowsPerStrip = TIFFDefaultStripSize(tif, linebytes);
-		if (!TIFFSetField(tif, TIFFTAG_ROWSPERSTRIP, rowsPerStrip))
+		// We set the strip size of the file to be size of one row of pixels ... 
+		uint32_t rowsPerStrip = TIFFDefaultStripSize(tif, 0 );
+		if (!TIFFSetField(tif, TIFFTAG_ROWSPERSTRIP, rowsPerStrip)) 
 			throw std::runtime_error("failed to write tiff");
 
-		
-		for (size_t iLine = 0; iLine < image->getHeight(); iLine++)
+		// stuff below is actually like for planar ...
+		size_t numPlanes =  props->writeSeparatedPlanes ? spp : 1;
+		std::unique_ptr<size_t[]> internalPlaneIndex( new size_t[numPlanes] );
+		if ( props->writeSeparatedPlanes )
 		{
-			uint8_t* line = image->getLine(iLine);
+			for ( size_t iPlaneExternal=0; iPlaneExternal<numPlanes; iPlaneExternal++ )
+				internalPlaneIndex[iPlaneExternal] = iPlaneExternal + (internalAlphaPlaneReorder?1:0); // when alpha is present in AGRAY, ARGB: 0->1, 1->2... n=0
+			if ( internalAlphaPlaneReorder )
+				internalPlaneIndex[numPlanes-1] = 0; // this is the n=0 mentioned above...
+		}
+		size_t planePixelOffset = bypp*(spp-1);
+		
+		// we loop through each plane --- of which there's only one if we write contingous
 
-			switch (image->getPixelMode())
+		for ( size_t iPlane=0; iPlane<numPlanes; iPlane++ )
+		{
+			for (size_t iLine = 0; iLine < image->getHeight(); iLine++)
 			{
-			case PixelMode::GRAY8:
-			case PixelMode::GRAY16:
-			case PixelMode::RGB8:
-			case PixelMode::RGB16:
-			case PixelMode::CMYK8:
-			case PixelMode::CMYK16:
-			case PixelMode::CMYKA8:
-			case PixelMode::CMYKA16:
-				TIFFWriteScanline(tif, line, iLine, 0);
-				break;
-			case PixelMode::ARGB8: 
-			{
-				uint8_t* p = reinterpret_cast<uint8_t*>(lineBuffer.get());
-				uint8_t* q = reinterpret_cast<uint8_t*>(line);
-				for (size_t iCol = 0; iCol < image->getWidth(); iCol++)
-				{
-					*p++ = q[1];	// R
-					*p++ = q[2];	// G
-					*p++ = q[3];	// B
-					*p++ = q[0];	// A
-					q += 4;
-				}
-				TIFFWriteScanline(tif, lineBuffer.get(), iLine, 0);
-				break;
-			}
-			case PixelMode::ARGB16: 
-			{
-				uint16_t* p = reinterpret_cast<uint16_t*>(lineBuffer.get());
-				uint16_t* q = reinterpret_cast<uint16_t*>(line);
-				for (size_t iCol = 0; iCol < image->getWidth(); iCol++)
-				{
-					*p++ = q[1];	// R
-					*p++ = q[2];	// G
-					*p++ = q[3];	// B
-					*p++ = q[0];	// A
-					q += 4;
-				}
-				TIFFWriteScanline(tif, lineBuffer.get(), iLine, 0);
-				break;
-			}
-			case PixelMode::AGRAY8: 
-			{
-				uint8_t* p = reinterpret_cast<uint8_t*>(lineBuffer.get());
-				uint8_t* q = reinterpret_cast<uint8_t*>(line);
-				for (size_t iCol = 0; iCol < image->getWidth(); iCol++)
-				{
-					*p++ = q[1];	// G
-					*p++ = q[0];	// A
-					q += 2;
-				}
-				TIFFWriteScanline(tif, lineBuffer.get(), iLine, 0);
-				break;
+				uint8_t* line = image->getLine(iLine);
 				
-			}
-			case PixelMode::AGRAY16: 
-			{
-				uint16_t* p = reinterpret_cast<uint16_t*>(lineBuffer.get());
-				uint16_t* q = reinterpret_cast<uint16_t*>(line);
-				for (size_t iCol = 0; iCol < image->getWidth(); iCol++)
+				if ( props->writeSeparatedPlanes )
 				{
-					*p++ = q[1];	// G
-					*p++ = q[0];	// A
-					q += 2;
+					uint8_t* p = reinterpret_cast<uint8_t*>(lineBuffer.get());
+					uint8_t* q = reinterpret_cast<uint8_t*>(line); 
+					q += bypp*internalPlaneIndex[iPlane]; // skip to the first sample of the internal plane we are looking for and go from there.
+					for (size_t iCol = 0; iCol < image->getWidth(); iCol++)
+					{
+						*p++ = *q++;
+						if ( bypp==2 ) *p++ = *q++;	// much faster than a for-loop over bytes - but needs adaption if we ever write larger than 16 bit/pixel (e.g. float)
+						q+=planePixelOffset; // jump to next pixel in same plane
+					}
+					TIFFWriteScanline(tif, lineBuffer.get(), iLine, iPlane);
 				}
-				TIFFWriteScanline(tif, lineBuffer.get(), iLine, 0);
-				break;
-			}
-			} // end of switch(pixelMode)
-		} // end of for-line-loop
-
+				else
+				{
+					switch (image->getPixelMode())
+					{
+					case PixelMode::GRAY8:
+					case PixelMode::GRAY16:
+					case PixelMode::RGB8:
+					case PixelMode::RGB16:
+					case PixelMode::CMYK8:
+					case PixelMode::CMYK16:
+					case PixelMode::CMYKA8:
+					case PixelMode::CMYKA16:
+						TIFFWriteScanline(tif, line, iLine, 0);
+						break;
+						
+					case PixelMode::ARGB8: // todo: planar from here down 
+					{
+						uint8_t* p = reinterpret_cast<uint8_t*>(lineBuffer.get());
+						uint8_t* q = reinterpret_cast<uint8_t*>(line);
+						for (size_t iCol = 0; iCol < image->getWidth(); iCol++)
+						{
+							*p++ = q[1];	// R
+							*p++ = q[2];	// G
+							*p++ = q[3];	// B
+							*p++ = q[0];	// A
+							q += 4;
+						}
+						TIFFWriteScanline(tif, lineBuffer.get(), iLine, 0);
+						break;
+					}
+					case PixelMode::ARGB16: 
+					{
+						uint16_t* p = reinterpret_cast<uint16_t*>(lineBuffer.get());
+						uint16_t* q = reinterpret_cast<uint16_t*>(line);
+						for (size_t iCol = 0; iCol < image->getWidth(); iCol++)
+						{
+							*p++ = q[1];	// R
+							*p++ = q[2];	// G
+							*p++ = q[3];	// B
+							*p++ = q[0];	// A
+							q += 4;
+						}
+						TIFFWriteScanline(tif, lineBuffer.get(), iLine, 0);
+						break;
+					}
+					case PixelMode::AGRAY8: 
+					{
+						uint8_t* p = reinterpret_cast<uint8_t*>(lineBuffer.get());
+						uint8_t* q = reinterpret_cast<uint8_t*>(line);
+						for (size_t iCol = 0; iCol < image->getWidth(); iCol++)
+						{
+							*p++ = q[1];	// G
+							*p++ = q[0];	// A
+							q += 2;
+						}
+						TIFFWriteScanline(tif, lineBuffer.get(), iLine, 0);
+						break;
+						
+					}
+					case PixelMode::AGRAY16: 
+					{
+						uint16_t* p = reinterpret_cast<uint16_t*>(lineBuffer.get());
+						uint16_t* q = reinterpret_cast<uint16_t*>(line);
+						for (size_t iCol = 0; iCol < image->getWidth(); iCol++)
+						{
+							*p++ = q[1];	// G
+							*p++ = q[0];	// A
+							q += 2;
+						}
+						TIFFWriteScanline(tif, lineBuffer.get(), iLine, 0);
+						break;
+					}
+					} // end of switch(pixelMode)
+				} // end of contingous mode
+			} // end of for-line-loop
+		} // end of for-plane-loop
 		TIFFClose(tif);
 	}
 	catch (std::runtime_error)
@@ -339,7 +375,7 @@ void ImageCoderTiff::read( const std::string & filename )
 			/////////////////////////
 			uint16_t halftoneHints_White = 0; // default
 			uint16_t halftoneHints_Black = 0; // default
-			if ( props->applyHalftoneHints )
+			if ( props->applyHalftoneHintsOnRead )
 				TIFFGetField( tif, TIFFTAG_HALFTONEHINTS, &halftoneHints_White, &halftoneHints_Black );
 
 

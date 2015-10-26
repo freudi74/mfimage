@@ -238,4 +238,24 @@ SUITE(TiffSuite)
 		END_TEST();
 	}
 	
+	TEST(WritePlanar)
+	{
+		START_TEST();
+		std::list<std::string> testFileNames = { 
+			"flower-separated-contig-08.tif", 
+			"flower-separated-contig-16.tif", 
+			"flower-rgb-contig-08.tif",
+			"flower-rgb-contig-16.tif",
+		};
+
+		ImageCoderProperties props;
+		props.writeSeparatedPlanes = true;
+		for ( std::string & testFileName : testFileNames )
+		{
+			Image img;
+			img.read( TEST_2_FILES "depth" SEPARATOR + testFileName, 1 );
+			img.write( TEST_2_OUT "depth" SEPARATOR + testFileName + "-toPlanar.tif", IE_TIFF, &props );
+		}		
+		END_TEST();	
+	}
 }
