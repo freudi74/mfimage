@@ -1,4 +1,4 @@
-#include <UnitTest++.h>
+#include <unittest++/UnitTest++.h>
 #include <iostream> 
 #include <stdexcept> 
 #include <list>
@@ -6,6 +6,8 @@
 #include "../src/ColorManager.h"
 
 #include "folders.h"
+
+#ifndef SKIP_TIFF_SUITE
 
 #define TEST_1_FILES TESTDATA SEPARATOR "tiff" SEPARATOR
 #define TEST_1_OUT   TESTOUT  SEPARATOR "tiff" SEPARATOR
@@ -39,7 +41,9 @@ SUITE(TiffSuite)
 	{
 		START_TEST();
 		std::list<std::string> testFileNames = { 
-			"transbugs-rgb-a-8-contig.tif"
+			"transbugs-rgb-a-8-contig.tif",
+			"Test_Green_with_transparent_ARGB.tif"
+
 		};
 		Image img; 
 		for ( std::string & testFileName : testFileNames )
@@ -259,3 +263,5 @@ SUITE(TiffSuite)
 		END_TEST();	
 	}
 }
+
+#endif

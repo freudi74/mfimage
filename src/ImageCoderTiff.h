@@ -11,7 +11,6 @@
 
 #pragma once
 #include "ImageCoder.h"
-#include "ImageCoderParameter.h"
 
 typedef struct tiff TIFF; // fwd decl
 class ImageCoderTiff :
@@ -25,19 +24,23 @@ public:
 	virtual bool canEncode() override;
 	virtual bool canEncode( PixelMode pixelMode ) override;
 	virtual void read(const std::string & filename) override;
+	virtual void read(std::istream & stream) override;
 	virtual void write(const std::string & filename) override;
+	virtual void write(std::ostream & stream) override;
 
 protected:
-	void readBilevelOrGray(TIFF* tif, uint32_t width, uint32_t height, double dpiX, double dpiY, uint16_t samplesPerPixel, uint16_t bitsPerSample, int extraAlphaSample, bool inverted, bool separated, uint16_t fillorder, uint16_t whiteLevel, uint16_t blackLevel, uint8_t* tiledImageBuffer );
+	void readBilevelOrGray(TIFF* tif, uint32_t width, uint32_t height, double dpiX, double dpiY, uint16_t samplesPerPixel, uint16_t bitsPerSample, int extraAlphaSample, bool inverted, bool separated, uint16_t whiteLevel, uint16_t blackLevel, uint8_t* tiledImageBuffer );
 	void readRGB(TIFF* tif, uint32_t width, uint32_t height, double dpiX, double dpiY, uint16_t samplesPerPixel, uint16_t bitsPerSample, int extraAlphaSample, bool separated, uint8_t* tiledImageBuffer);
 	void readCMYK(TIFF* tif, uint32_t width, uint32_t height, double dpiX, double dpiY, uint16_t samplesPerPixel, uint16_t bitsPerSample, int extraAlphaSample, bool separated, uint8_t* tiledImageBuffer);
 	void readRGBPalette(TIFF* tif, uint32_t width, uint32_t height, double dpiX, double dpiY, uint16_t samplesPerPixel, uint16_t bitsPerSample, int extraAlphaSample, bool separated, uint8_t* tiledImageBuffer);
 	
 private:
-	size_t _tiles_planeSize;	// size (in bytes) of a single PLANE in the tiled buffer
-	size_t _tiles_numPlanes;	// number of planes in the tiled buffer - 1 for contingous config
+	uint32_t _tiles_planeSize;	// size (in bytes) of a single PLANE in the tiled buffer
+	uint32_t _tiles_numPlanes;	// number of planes in the tiled buffer - 1 for continuous config
 //	std::unique_ptr<uint8_t[]> _tiledImageBuffer;	// tiled image buffer - empty for non-tiled
 
-	inline int readscanline(TIFF* tif, uint8_t* tiledImageBuffer, size_t scanlinesize, void* dest, uint32_t row, uint16_t sample=0 );
+	inline int readscanline(TIFF* tif, uint8_t* tiledImageBuffer, uint32_t scanlinesize, void* dest, uint32_t row, uint16_t sample=0 );
+	void readAndClose(TIFF* tif);
+	void writeAndClose(TIFF* tif);
 
 };

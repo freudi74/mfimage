@@ -35,6 +35,17 @@ typedef enum ImageEncoding {
 	IE_PCX,
 	/** TGA (Targa) File Format */
 	IE_TGA,
+
+	/** USER SPECIFIC CODECS */
+	IE_USER_1 = 1001,
+	IE_USER_2,
+	IE_USER_3,
+	IE_USER_4,
+	IE_USER_5,
+	IE_USER_6,
+	IE_USER_7,
+	IE_USER_8,
+
 } ImageEncoding;
 
 class Image
@@ -42,27 +53,43 @@ class Image
 	friend class ImageCoder;
 	friend class ColorManager;
 public:
-	typedef struct Pixel_GRAY_8   { uint8_t  value; } Pixel_GRAY_8;
-	typedef struct Pixel_GRAY_16  { uint16_t value; } Pixel_GRAY_16;
-	typedef struct Pixel_AGRAY_8  { uint8_t  a; uint8_t  value; } Pixel_AGRAY_8;
-	typedef struct Pixel_AGRAY_16 { uint16_t a; uint16_t value; } Pixel_AGRAY_16;
-	typedef struct Pixel_ARGB_8   { uint8_t  a; uint8_t  r; uint8_t  g; uint8_t  b; } Pixel_ARGB_8;
-	typedef struct Pixel_ARGB_16  { uint16_t a; uint16_t r; uint16_t g; uint16_t b; } Pixel_ARGB_16;
-	typedef struct Pixel_BGRA_8   { uint8_t  b; uint8_t  g; uint8_t  r; uint8_t  a; } Pixel_BGRA_8;		// only for external usage. Internal always ARGB.
-	typedef struct Pixel_BGRA_16  { uint16_t b; uint16_t g; uint16_t r; uint16_t a; } Pixel_BGRA_16;	// only for external usage. Internal always ARGB.
-	typedef struct Pixel_RGB_8    { uint8_t  r; uint8_t  g; uint8_t  b;             } Pixel_RGB_8;
-	typedef struct Pixel_RGB_16   { uint16_t r; uint16_t g; uint16_t b;             } Pixel_RGB_16;
-	typedef struct Pixel_BGR_8    { uint8_t  b; uint8_t  g; uint8_t  r;             } Pixel_BGR_8;		// only for external usage. Internal always RGB.
-	typedef struct Pixel_BGR_16   { uint16_t b; uint16_t g; uint16_t r;             } Pixel_BGR_16;		// only for external usage. Internal always RGB.
-	typedef struct Pixel_CMYK_8   { uint8_t  c; uint8_t  m; uint8_t  y; uint8_t  k; } Pixel_CMYK_8;
-	typedef struct Pixel_CMYK_16  { uint16_t c; uint16_t m; uint16_t y; uint16_t k; } Pixel_CMYK_16;
-	typedef struct Pixel_CMYKA_8  { uint8_t  c; uint8_t  m; uint8_t  y; uint8_t  k; uint8_t  a; } Pixel_CMYKA_8;
-	typedef struct Pixel_CMYKA_16 { uint16_t c; uint16_t m; uint16_t y; uint16_t k; uint16_t a; } Pixel_CMYKA_16;
+#pragma pack(push,1)
+	template <typename T> struct Pixel_GRAY { T value;  };
+	template <typename T> struct Pixel_AGRAY{ T alpha; T value; };
+	template <typename T> struct Pixel_RGB{ T r; T g; T b; };
+	template <typename T> struct Pixel_ARGB{ T alpha; T r; T g; T b; };
+	template <typename T> struct Pixel_CMYK{ T c; T m; T y; T k; };
+	template <typename T> struct Pixel_CMYKA{ T c; T m; T y; T k; T alpha; };
+	template <typename T> struct Pixel_LAB{ T l; T a; T b; };
+	template <typename T> struct Pixel_LABA{ T l; T a; T b; T alpha; };
+
+	typedef struct Pixel_GRAY<uint8_t>   Pixel_GRAY_8;
+	typedef struct Pixel_GRAY<uint16_t>  Pixel_GRAY_16;
+	typedef struct Pixel_GRAY<float>     Pixel_GRAY_32;
+	typedef struct Pixel_AGRAY<uint8_t>  Pixel_AGRAY_8;
+	typedef struct Pixel_AGRAY<uint16_t> Pixel_AGRAY_16;
+	typedef struct Pixel_AGRAY<float>    Pixel_AGRAY_32;
+	typedef struct Pixel_RGB<uint8_t>    Pixel_RGB_8;
+	typedef struct Pixel_RGB<uint16_t>   Pixel_RGB_16;
+	typedef struct Pixel_RGB<float>      Pixel_RGB_32;
+	typedef struct Pixel_ARGB<uint8_t>   Pixel_ARGB_8;
+	typedef struct Pixel_ARGB<uint16_t>  Pixel_ARGB_16;
+	typedef struct Pixel_ARGB<float>     Pixel_ARGB_32;
+	typedef struct Pixel_CMYK<uint8_t>   Pixel_CMYK_8;
+	typedef struct Pixel_CMYK<uint16_t>  Pixel_CMYK_16;
+	typedef struct Pixel_CMYK<float>     Pixel_CMYK_32;
+	typedef struct Pixel_CMYKA<uint8_t>  Pixel_CMYKA_8;
+	typedef struct Pixel_CMYKA<uint16_t> Pixel_CMYKA_16;
+	typedef struct Pixel_CMYKA<float>    Pixel_CMYKA_32;
+	typedef struct Pixel_LAB<float> Pixel_LAB_32;
+	typedef struct Pixel_LABA<float>    Pixel_LABA_32;
+#pragma pack(pop)
 
 protected:	
 	static const std::string ColorModel_Gray;
 	static const std::string ColorModel_RGB;
 	static const std::string ColorModel_CMYK;
+	static const std::string ColorModel_Lab;
 
 public:
 	/** Constructor.
@@ -77,17 +104,36 @@ public:
 
 	/** Reads image from a file.
 	*
-	* @param filename  name of the file
+	* @param filename  Name of the file. Fully qualified or relative to working directory.
 	* @param subImage  "page number" for multi-image files (such as GIF, TIFF). Will fail if sub image does not exist.
-	* @param props     Optional properties object for (a) setting some behavour, (b) gathering some values.
+	* @param props     Optional properties object for (a) setting some behaviour, (b) gathering some values.
 	*/
 	void read(const std::string & filename, size_t subImage=1, ImageCoderProperties* props=nullptr );
+	
+	/** Reads image from a stream.
+	*
+	* @param stream    Stream to read from. Stream must support random access (seekg, tellg) for most image formats. Stream position will be modified during reading, not guarantees where it is when done, even less guarantees after a failure during read. Stream will not be closed.
+	* @param imageName Name of the image, used for debugging output only. Could be a filename or any other identifier - or empty.
+	* @param subImage  "page number" for multi-image files (such as GIF, TIFF). Will fail if sub image does not exist.
+	* @param props     Optional properties object for (a) setting some behaviour, (b) gathering some values.
+	*/
+	void read(std::istream & stream, const std::string imageName="", size_t subImage = 1, ImageCoderProperties* props = nullptr);
+
+	/** Reads image from a buffer.
+	*
+	* @param imageBuffer       buffer with image data. Will not be modified or released. 
+	* @param imageBufferLength Length of buffer with image data.
+	* @param imageName         Name of the image, used for debugging output only. Could be a filename or any other identifier - or empty.
+	* @param subImage          "page number" for multi-image files (such as GIF, TIFF). Will fail if sub image does not exist.
+	* @param props             Optional properties object for (a) setting some behaviour, (b) gathering some values.
+	*/
+	void read( const void* imageBuffer, size_t imageBufferSize, const std::string imageName = "", size_t subImage = 1, ImageCoderProperties* props = nullptr);
 	
 	/** Writes image to a file.
 	*
 	* @param filename       Name of the file.
 	* @param ImageEncoding  Encoding (Image Format) type.
-	* @param props          Optional properties object for (a) setting some behavour, (b) gathering some values.
+	* @param props          Optional properties object for (a) setting some behaviour, (b) gathering some values.
 	*/
 	void write(const std::string & filename, ImageEncoding enc, ImageCoderProperties* props=nullptr );
 	
@@ -176,6 +222,11 @@ public:
 	 */	
 	bool is16bpc() const;	
 	
+	/** Is this image 32 bits per channel?
+	* @return true if this image is 32 bits per channel (IEEE float)
+	*/
+	bool is32bpc() const;
+
 	/** Get the PixelMode.
 	 * @return The pixel mode of this image.
 	 */	
@@ -201,6 +252,11 @@ public:
 	 */	
 	uint32_t getStride() const;
 	
+	/** Get Bytes per Channel.
+	* @return The number of bytes per channel.
+	*/
+	uint32_t getChannelSize() const;
+
 	/** Get Bytes per Pixel.
 	 * @return The number of bytes per pixel, including padding (typically, pixels are not padded).
 	 */	
@@ -232,35 +288,59 @@ public:
 	 */	
 	bool isRGB() const;
 
-	/** Is the Color Model RGB?
+	/** Is the Color Model Gray?
 	 * @return true if image is encoded in Gray color model (might also be bilevel).
 	 */	
 	bool isGray() const;
+
+	/** Is the Color Model L*a*b*? 
+	 * @return true if image is encoded in L*a*b* color model.
+	 */
+	bool isLab() const;
 
 	/** Does the image have an alpha channel?
 	 * @return true if image has an alpha channel.
 	 */	
 	bool hasAlpha() const;
 
+	/** Does the image have an ICC profile ?
+	 * @return true if image has an ICC profile.
+	 */
+	bool hasIccProfile() const;
+
+	/** Get the icc profile.
+	 * @return Unmodifiable string with icc profile content. Don't mess with it!
+	 */
+	const std::string & getIccProfileContent() const;
+
+	/** Set the icc profile content. You better make sure it's a valid profile!
+	 */
+	void setIccProfile(const std::string iccProfile);
+
+	/** Set the icc profile content. You better make sure it's a valid profile!
+	*/
+	void setIccProfile(const void* buffer, size_t len );
+
+
 private:
 	// this structure is similar (!!!) to the lplImage structure in openCV and Intel IPL for quick conversion... but certainly, not equal !
 	typedef struct Header {
-		size_t      nSize = sizeof(Header); // sizeof struct
+		size_t      nSize = sizeof(Header); // sizeof struct - not that this may differ a lot depending on the size of std::string! This is not a good model, yet...
 		int         ID             = 0; // Version, always equals 0
 		int         nChannels      = 4; // Number of channels. Default 4 (ARGB)
-		int         alphaChannel   = 0; // Alpha channel; -1: no alpha; >0: index of alpha channel. max value: nChannels-1
-		int         depth          = 8; // Bits per channel, 1, 8, 16 (UINT) or 32 (float) or 64 (double)                         -- NOTE THAT WE CURRENTLY ONLY SUPPORT 8 and 16! Might want to add 32 and 64!
-		std::string colorModel{"RGB"};	// just for information, not really used
-		std::string channelSeq{"ARGB"}; // just for information, not really used 
+		int         alphaChannel   = 0; // Alpha channel; -1: no alpha; >=0: index of alpha channel. max value: nChannels-1
+		int         depth          = 8; // Bits per channel, 1, 8, 16 (UINT) or 32 (float) or 64 (double)                         -- NOTE THAT WE CURRENTLY ONLY SUPPORT 8 and 16 and 32! Not 1 or 64!
+		std::string colorModel     = "RGB";	// just for information, not really used
+		std::string channelSeq     = "ARGB"; // just for information, not really used 
 		int         dataOrder      = 0; // data order pixel (0:chunks (e.g. RGBRGBRGB...); 1: planes(e.g. RRRR...GGGG...BBBB...)) -- NOTE THAT WE ONLY SUPPORT 0
 		int         origin         = 0; // top left (1: bottom left);		   	                                                 -- NOTE THAT WE ONLY SUPPORT 0
 		int         pixelAlign     = 1; // pixel alignment
 		int         lineAlign      = 4; // Lines are aligned ...
-		int         bytesPerPixel  = 4;
-		size_t      width = 0;
-		size_t      height = 0;
+		int         bytesPerPixel  = 4; // bytes per Pixel (all color samples! Depth/8*nChannels) - EXCLUDING PADDING
+		size_t      width     = 0;
+		size_t      height    = 0;
 		size_t      widthStep = 0;  // "size of aligned line in bytes" (stride)
-		size_t      imageSize = 0;  // size of data, including padding.
+		size_t      imageSize = 0;  // size of data, including padding. Total size of array in pixels.
 	} Header;
 
 protected:
@@ -287,6 +367,7 @@ public:
 	 * @return Pointer to the first byte of the first pixel of a line. Each line is getStride() bytes long and has getWidth() pixels.
 	 */
 	uint8_t* getLine( size_t line );
+	const uint8_t*  getLineConst(size_t line) const;
 
 	/** Get a pixel.
 	 * 
@@ -295,6 +376,7 @@ public:
 	 * @return Pointer to the beginning of the pixel information. The pixel is getPixelSize() bytes long.
 	 */
 	uint8_t* getPixel( size_t line, size_t column );
+	const uint8_t* getPixelConst(size_t line, size_t column) const;
 
 	/** Get a pixel.
 	 * 
@@ -303,6 +385,7 @@ public:
 	 * @return Pointer to the beginning of the pixel information. The pixel is getPixelSize() bytes long.
 	 */
 	uint8_t* getPixel( void* line, size_t column );
+	const uint8_t* getPixelConst(const void* line, size_t column) const;
 
 public:
 	// modification methods
@@ -314,7 +397,7 @@ public:
 	 * @param w      Width of region to fill. If 0 or > (getWidth()-x), the complete image (from origin) will be filled.
 	 * @param h      Height of region to fill. If 0 or > (getHeight()-y), the complete image (from origin) will be filled.
 	 */
-	void fill( void* pixel, size_t x=0, size_t y=0, size_t w=0, size_t h=0 );
+	void fill( const void* pixel, size_t x=0, size_t y=0, size_t w=0, size_t h=0 );
 
 	/** Converts image to 8 bits per channel.
 	 * 
@@ -322,7 +405,7 @@ public:
      *
 	 * @param out  Target image. If nullptr, conversion will be done in-place.
 	 */
-	void convertTo8bpc( Image* out=nullptr );	// inplace if out is nullptr
+	void convertTo8bpc( Image* out=nullptr );
 
 	/** Converts image to 16 bits per channel.
 	 * 
@@ -330,8 +413,16 @@ public:
 	 * 
 	 * @param out  Target image. If nullptr, conversion will be done in-place.
 	 */
-	void convertTo16bpc( Image* out=nullptr );  // inplace if out is nullptr
+	void convertTo16bpc(Image* out = nullptr);
 
+	/** Converts image to 32 bits per channel.
+	*
+	* If image already has 32bpc, image will be copied.
+	*
+	* @param out  Target image. If nullptr, conversion will be done in-place.
+	*/
+	void convertTo32bpc(Image* out = nullptr);
+	
 	/** Remove the alpha channel from the image.
 	 * 
 	 * Will fail if image does not have an alpha channel.
@@ -339,16 +430,16 @@ public:
 	 * @param multyplyOntoColors  Will "pre-multiply" color values. True: Behaviour as if the image would be composited onto a white background. False: Don't touch colors, Just drop the transparency.
 	 * @param out                 Target image. If nullptr, alpha channel will be removed in-place from current image.
 	 */
-	void removeAlphaChannel( bool multiplyOntoColors=false, Image* out=nullptr );
+	void removeAlphaChannel(bool multiplyOntoColors = false, Image* out = nullptr);
 
 	/** Add an alpha channel to the image.
 	 * 
 	 * Will fail if image already has an alpha channel.
 	 * 
-	 * @param setAllTransparent  If true, all pixels will be made 100% tranparent. Otherwise, 100% opaque.
+	 * @param setAllTransparent  transparency value (0 to 1) for each pixel.
 	 * @param out                Target image. If nullptr, alpha channel will be added in-place to current image.
 	 */
-	void addAlphaChannel( bool setAllTransparent=false, Image* out=nullptr );
+	void addAlphaChannel(double transparency = 0.0, Image* out = nullptr);
 	
 	
 	enum class FlipDirection : int { Horizontal=1, Vertical=2, SwapXY=4 };
@@ -360,6 +451,8 @@ public:
 	 */
 	void flip( FlipDirection flipAxis, Image* out=nullptr );
 	
+#if 0 // this stuff isn't implemented yet and should move out to separate filter classes (perhaps including the "flip")
+	  
 	/** Invert the image.
 	 * 
 	 * @param channel   Channel to apply the change on. -1 means all but alpha channel.
@@ -374,27 +467,59 @@ public:
 	 * @param gamma     Gamma correction value; Range: 0.05 - 20.0; Neutral: 1.0. 
 	 * @param outBlack  Black output level. 0 always means black. Range: 0 ... 2^depth-2. Neutral: 0.
 	 * @param outWhite  White output level. 0 always means black. Range: outBlack+1 ... 2^depth-1. Neutral: 2^depth-1
-	 * @param channel   Channel to apply the change on. -1 means all but alpha channel.
+	 * @param channel   Channel to apply the change on. -1 means all but alpha channel. For L*a*b* images, channel -1 means L* only.
 	 * @param out       Target image. If nullptr, the image will be flipped in-place to current image.
 	 */
 	void levels( uint32_t inBlack=0, uint32_t inWhite=255, double gamma=1.0, uint32_t outBlack=0, uint32_t outWhite=255, int32_t channel=-1, Image* out=nullptr );
 
+	/** Levels filter.
+	*
+	* @param inBlack   Black input level. 0 always means black. Range: 0.0 ... 1.0. Neutral: 0.0
+	* @param inWhite   White input level. 0 always means black. Range: >outBlack ... 1.0. Neutral: 1.0
+	* @param gamma     Gamma correction value; Range: 0.05 - 20.0; Neutral: 1.0.
+	* @param outBlack  Black output level. 0 always means black. Range: 0.0 ... 1.0. Neutral: 0.0
+	* @param outWhite  White output level. 0 always means black. Range: >outBlack ... 1.0. Neutral: 1.0
+	* @param channel   Channel to apply the change on. -1 means all but alpha channel. For L*a*b* images, channel -1 means L* only.
+	* @param out       Target image. If nullptr, the image will be flipped in-place to current image.
+	*/
+	void levels( double inBlack=0.0, double inWhite=1.0, double gamma= 1.0, double outBlack=0.0, double outWhite=1.0, int32_t channel = -1, Image* out = nullptr);
+
 	/** Brightness & Contrast.
 	 * 
-	 * @param brightness  Ammount of brightness Change. Range: -(2^depth-1) ... +(2^depth-1). Neutral: 0
-	 * @param contrast    Ammount of contrast Change. Range: -((2^depth)/2-1) ... +((2^depth)/2-1). Neutral: 0.
-	 * @param channel     Channel to apply the change on. -1 means all but alpha channel.
+	 * @param brightness  Amount of brightness Change. Range: -(2^depth-1) ... +(2^depth-1) [-255...+255 for 8 bits]. Neutral: 0
+	 * @param contrast    Amount of contrast Change. Range: -((2^(depth-1)-1) ... +((2^(depth-1))-1) [-127...+127 for 8 bits]. Neutral: 0.
+	 * @param channel     Channel to apply the change on. -1 means all but alpha channel. For L*a*b* images, channel -1 means L* only.
 	 * @param out         Target image. If nullptr, the image will be flipped in-place to current image. 
 	 */
 	void brightnessContrast( int32_t brightness=0, int32_t contrast=0, int32_t channel=-1, Image* out=nullptr );
-	
-	/** Apply table.
+	/** Brightness & Contrast.
+
+	*
+	* @param brightness  Amount of brightness Change. Range: -1.0 to +1.0 [-255...+255 for 8 bits]. Neutral: 0
+	* @param contrast    Amount of contrast Change. Range: -1.0 to +1.0. Neutral: 0.
+	* @param channel     Channel to apply the change on. -1 means all but alpha channel. For L*a*b* images, channel -1 means L* only.
+	* @param out         Target image. If nullptr, the image will be flipped in-place to current image.
+	*/
+
+	void brightnessContrast( double brightness=0.0, double contrast=0.0, int32_t channel = -1, Image* out = nullptr);
+
+	/** Apply table. Only works for INT based pixel values, not float based.
 	 * 
-	 * @param table    Table for the selected channel. size must be 2^depth
-	 * @param channel  Channel to apply the table on. -1 means all but alpha channel.
+	 * @param table    Table for the selected channel. size must be 2^depth.
+	 * @param channel  Channel to apply the table on. -1 means all but alpha channel. For L*a*b* images, channel -1 means L* only.
 	 * @param out         Target image. If nullptr, the image will be flipped in-place to current image. 
+	 * @note: will fail on float or double based images.
 	 */ 
 	void applyTable( std::vector<uint16_t> table, int32_t channel=-1, Image* out=nullptr );
+#endif
+	/** Calculate a hash for the image. The purpose is to test if two images are equal by content.
+	 * Uses a 64bit Fowler/Vo/Noll 1a hash.
+	 * The hash is calculated over header, pixelMode, DPI, (optionally) ICC Profile and Pixel data.
+	 * 
+	 * @return 64 bit hash value
+	 */
+	uint64_t calcHash(bool includeIccProfile = true) const;
 
+	static uint64_t calcHash(const std::string & test);
 };
 

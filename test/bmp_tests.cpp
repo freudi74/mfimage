@@ -1,9 +1,11 @@
-#include <UnitTest++.h>
+#include <unittest++/UnitTest++.h>
 #include <list> 
 #include <string> 
 #include <iostream>
 #include "../src/Image.h"
 #include "folders.h"
+
+#ifndef SKIP_BMP_SUITE
 
 #define TEST_FILES TESTDATA SEPARATOR "bmp" SEPARATOR
 #define TEST_OUT   TESTOUT  SEPARATOR "bmp" SEPARATOR
@@ -15,10 +17,10 @@ SUITE(BmpSuite)
 	{
 		START_TEST();
 		std::list<std::string> testFileNames = { 
-//			"alex8bit.bmp",
-//			"DadWood.bmp",
-//			"12x12 Women sample 400 dpi.bmp",
-//			"12x12 women sample 400 dpi,black marble.bmp",
+			"alex8bit.bmp",
+			"DadWood.bmp",
+			"12x12 Women sample 400 dpi.bmp",
+			"12x12 women sample 400 dpi,black marble.bmp",
 			"ffc.bmp",
 			"B1B.BMP",
 			"TREES.BMP",
@@ -72,3 +74,5 @@ SUITE(BmpSuite)
 	}
 
  }
+
+#endif

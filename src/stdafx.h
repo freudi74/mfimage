@@ -19,6 +19,7 @@
 #ifdef _WIN32
 	/* WINDOWS */
 #   include "win/targetver.h"
+#   define NOMINMAX
 #   define WIN32_LEAN_AND_MEAN             // Exclude rarely-used stuff from Windows headers
 #else
 	/* UNIXOID */
@@ -34,5 +35,6 @@
 #include <fstream>
 #include <vector>
 #include <iomanip>
+#include "version.h"
 
 // TODO: reference additional headers your program requires here

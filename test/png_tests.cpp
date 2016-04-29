@@ -1,4 +1,4 @@
-#include <UnitTest++.h>
+#include <unittest++/UnitTest++.h>
 #include <iostream> 
 #include <stdexcept> 
 #include "../src/Image.h"
@@ -6,9 +6,10 @@
 
 #include "folders.h"
 
+#ifndef SKIP_PNG_SUITE
+
 #define TEST_FILES TESTDATA SEPARATOR "png_test_suite" SEPARATOR
 #define TEST_OUT   TESTOUT  SEPARATOR "png" SEPARATOR
-
 
 SUITE(PngSuite)
 {
@@ -113,7 +114,8 @@ SUITE(PngSuite)
 		readTransformWrite( img, "basn3p04", cms, defaultGray, defaultRGB );
 		readTransformWrite( img, "basn3p08", cms, defaultGray, defaultRGB );
 */		
-
+		readTransformWrite(img, "VisaQuickRead_Hairlines_600dpi", cms, defaultGray, defaultRGB);
+		
 			readTransformWrite2( img, "basn4a08", cms, defaultGray, defaultRGB, defaultRGB );
 			readTransformWrite( img, "basn4a16", cms, defaultGray, defaultRGB );
 		
@@ -185,3 +187,5 @@ SUITE(PngSuite)
 		END_TEST();
 	}
 }
+
+#endif

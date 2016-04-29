@@ -60,7 +60,7 @@ cmsHPROFILE ColorManager::readProfileFromImage(const Image* img, cmsHPROFILE def
 {
 	if (img->iccProfile.empty())
 		return defaultProfile;
-	cmsHPROFILE hp = readProfileFromMem(img->iccProfile.c_str(), img->iccProfile.size());
+	cmsHPROFILE hp = readProfileFromMem(img->iccProfile.c_str(), static_cast<uint32_t>(img->iccProfile.size()));
 //	cmsSaveProfileToFile(hp, "C:\\svn\\testIn.icc");
 	return hp;
 }
@@ -107,7 +107,7 @@ cmsHPROFILE ColorManager::createGrayProfile(const cmsCIExyY* whitePoint, double 
 }
 cmsHPROFILE ColorManager::createSrgbProfile()
 {
-	cmsHPROFILE hp = 	(_ctx);
+	cmsHPROFILE hp = cmsCreate_sRGBProfileTHR(_ctx);
 	if (hp == nullptr)
 		throw std::runtime_error("failed to create sRGB profile" + formatError());
 	return hp;
@@ -176,7 +176,7 @@ cmsToneCurve* ColorManager::buildGamma(double gamma, size_t entries)
 		double v= static_cast<double>(i)/static_cast<double>(entries-1);
 		values[i] = static_cast<cmsFloat32Number>( ( pow( v, gamma ) ) );
 	}
-	cmsToneCurve* myCurve = cmsBuildTabulatedToneCurveFloat(_ctx, entries, values );
+	cmsToneCurve* myCurve = cmsBuildTabulatedToneCurveFloat(_ctx, static_cast<cmsUInt32Number>(entries), values );
 	std::string error = formatError();
 	delete[] values;
 	return myCurve;

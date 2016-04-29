@@ -11,6 +11,7 @@
  
 #include "stdafx.h"
 #include "TimeStamper.h"
+#include <algorithm>
 
 TimeStamper::TimeStamper(size_t numStamps /*= 2*/) : stamps(numStamps)
 {

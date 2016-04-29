@@ -1,0 +1,174 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{992681E7-42AE-4264-845D-2861D58AD61E}</ProjectGuid>
+    <RootNamespace>mfimage</RootNamespace>
+    <IntDir>$(Platform)\$(Configuration)\</IntDir>
+    <OutDir>$(SolutionDir)..\..\$(Platform)\$(Configuration)\</OutDir>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v120</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v120</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v120</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v120</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <SDLCheck>true</SDLCheck>
+      <AdditionalIncludeDirectories>..\..\..\..\dep\openjp2\include;..\..\..\..\dep\libtiff\include;..\..\..\..\dep\libpng\include;..\..\..\..\dep\libjpeg-turbo\include;..\..\..\..\dep\lcms2\include;..\..\..\..\dep\giflib\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_SCL_SECURE_NO_WARNINGS;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <SDLCheck>true</SDLCheck>
+      <AdditionalIncludeDirectories>..\..\..\..\dep\openjp2\include;..\..\..\..\dep\libtiff\include;..\..\..\..\dep\libpng\include;..\..\..\..\dep\libjpeg-turbo\include;..\..\..\..\dep\lcms2\include;..\..\..\..\dep\giflib\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_SCL_SECURE_NO_WARNINGS;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <AdditionalIncludeDirectories>..\..\..\..\dep\openjp2\include;..\..\..\..\dep\libtiff\include;..\..\..\..\dep\libpng\include;..\..\..\..\dep\libjpeg-turbo\include;..\..\..\..\dep\lcms2\include;..\..\..\..\dep\giflib\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_SCL_SECURE_NO_WARNINGS;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <AdditionalIncludeDirectories>..\..\..\..\dep\openjp2\include;..\..\..\..\dep\libtiff\include;..\..\..\..\dep\libpng\include;..\..\..\..\dep\libjpeg-turbo\include;..\..\..\..\dep\lcms2\include;..\..\..\..\dep\giflib\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_SCL_SECURE_NO_WARNINGS;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\..\src\ColorManager.cpp" />
+    <ClCompile Include="..\..\..\src\Image.cpp" />
+    <ClCompile Include="..\..\..\src\ImageCoder.cpp" />
+    <ClCompile Include="..\..\..\src\ImageCoderBitmap.cpp" />
+    <ClCompile Include="..\..\..\src\ImageCoderGif.cpp" />
+    <ClCompile Include="..\..\..\src\ImageCoderJpeg.cpp" />
+    <ClCompile Include="..\..\..\src\ImageCoderJpeg2000.cpp" />
+    <ClCompile Include="..\..\..\src\ImageCoderPcx.cpp" />
+    <ClCompile Include="..\..\..\src\ImageCoderPng.cpp" />
+    <ClCompile Include="..\..\..\src\ImageCoderTarga.cpp" />
+    <ClCompile Include="..\..\..\src\ImageCoderTiff.cpp" />
+    <ClCompile Include="..\..\..\src\PixelMode.cpp" />
+    <ClCompile Include="..\..\..\src\stdafx.cpp" />
+    <ClCompile Include="..\..\..\src\TimeStamper.cpp" />
+    <ClCompile Include="..\..\..\src\memory_streambuf.cpp" />
+    <ClCompile Include="..\..\..\src\userCoders\ImageCoderDCP.cpp" />
+    <ClCompile Include="..\..\..\src\userCoders\ImageCoderDPEG.cpp" />
+    <ClCompile Include="..\..\..\src\userCoders\UserCoder_Springboard.cpp" />
+  </ItemGroup>
+    <ItemGroup>
+    <ClInclude Include="..\..\..\src\ColorManager.h" />
+    <ClInclude Include="..\..\..\src\Image.h" />
+    <ClInclude Include="..\..\..\src\ImageCoder.h" />
+    <ClInclude Include="..\..\..\src\ImageCoderBitmap.h" />
+    <ClInclude Include="..\..\..\src\ImageCoderGif.h" />
+    <ClInclude Include="..\..\..\src\ImageCoderJpeg.h" />
+    <ClInclude Include="..\..\..\src\ImageCoderJpeg2000.h" />
+    <ClInclude Include="..\..\..\src\ImageCoderPcx.h" />
+    <ClInclude Include="..\..\..\src\ImageCoderPng.h" />
+    <ClInclude Include="..\..\..\src\ImageCoderProperties.h" />
+    <ClInclude Include="..\..\..\src\ImageCoderTarga.h" />
+    <ClInclude Include="..\..\..\src\ImageCoderTiff.h" />
+    <ClInclude Include="..\..\..\src\PixelMode.h" />
+    <ClInclude Include="..\..\..\src\stdafx.h" />
+    <ClInclude Include="..\..\..\src\TimeStamper.h" />
+    <ClInclude Include="..\..\..\src\userCoders\ImageCoderDCP.h" />
+    <ClInclude Include="..\..\..\src\userCoders\ImageCoderDPEG.h" />
+    <ClInclude Include="..\..\..\src\userCoders\UserCoder_Springboard.h" />
+    <ClInclude Include="..\..\..\src\win\targetver.h" />
+    <ClInclude Include="..\..\..\src\version.h" />
+    <ClInclude Include="..\..\..\src\memory_streambuf.h" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

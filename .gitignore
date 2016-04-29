@@ -1,4 +1,9 @@
 /projects/codelite/.codelite
 /src/Debug
+/src/Release
 /test/out
 /test/Debug
+/test/Release
+/projects/codelite/.build-debug/mfimage
+/projects/codelite/.build-release/mfimage
+/projects/codelite/Makefile

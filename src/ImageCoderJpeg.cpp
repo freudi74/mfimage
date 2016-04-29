@@ -115,6 +115,14 @@ return TRUE;
 }
 */
 
+void ImageCoderJpeg::read(std::istream & stream)
+{
+	// @todo
+	// hardcore for now --- write to temp file and read from that file.
+	std::string tempFileName = storeStreamToTempFile(stream);
+	read(tempFileName);
+}
+
 void ImageCoderJpeg::read(const std::string & filename)
 {
 	FILE* pFile = fopen(filename.c_str(), "rb");
@@ -312,3 +320,7 @@ void ImageCoderJpeg::write(const std::string & filename )
 	throw std::runtime_error("JPEG write not implemented");
 }
 
+void ImageCoderJpeg::write(std::ostream & stream)
+{
+	throw std::runtime_error("JPEG write not implemented");
+}

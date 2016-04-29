@@ -1,4 +1,4 @@
-#include <UnitTest++.h>
+#include <unittest++/UnitTest++.h>
 #include <list> 
 #include <string> 
 #include <iostream>
@@ -6,9 +6,10 @@
 
 #include "folders.h"
 
+#ifndef SKIP_JPEG2000_SUITE
+
 #define TEST_FILES TESTDATA SEPARATOR "jp2" SEPARATOR
 #define TEST_OUT   TESTOUT  SEPARATOR "jp2" SEPARATOR
-
 
 SUITE(Jpeg2000Suite)
 {
@@ -32,3 +33,5 @@ SUITE(Jpeg2000Suite)
 	}
 }
 
+
+#endif

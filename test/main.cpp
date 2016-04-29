@@ -62,6 +62,7 @@
 int main(int argc, char **argv)
 {
 	cleanOut();
+	createFolder( TESTOUT );
 	createFolder( TESTOUT SEPARATOR "bmp" );
 	createFolder( TESTOUT SEPARATOR "gif" );
 	createFolder( TESTOUT SEPARATOR "jpg" );

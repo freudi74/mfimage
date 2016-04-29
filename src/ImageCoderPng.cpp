@@ -16,15 +16,16 @@
 #include "ColorManager.h"
 #include "TimeStamper.h"
 
-#define READ_SINGLE_ROWS 1	/* faster ? But why ? */
+#define READ_SINGLE_ROWS 0	/* faster ? But why ?  FAILS FOR INTERLACED IMAGES !!!!*/
 // #define ASSUME_CCIR_709 1 /* assign CCIR_709 if no cHRM is supplied */
 
 /* default whitepoint and primaries (CCIR 709 / Rec. 709 / HDTV) in case no cHRM (chroma) values are supplied.
  * Rec. 709 has the same primaries as sRGB. Linearization function is slightly different, but we use fixed gAMA anyways.
  */
 static const cmsCIExyY       CCIR_709_WHITEPOINT = { 0.3127, 0.3290, 1.0 };
-static const cmsCIExyYTRIPLE CCIR_709_PRIMARIES  = { { 0.640, 0.330, 1.0 }, { 0.300, 0.600, 1.0 }, { 0.150, 0.060, 1.0 } };
-static const double          DEFAULT_FILE_GAMMA  = 0.45455; // = 1/2.2 (roughly, same accuracy as PNG, close enough)
+//static const cmsCIExyYTRIPLE CCIR_709_PRIMARIES = { { 0.640, 0.330, 0.2126 }, { 0.300, 0.600, 0.7152 }, { 0.150, 0.060, 0.0722 } };
+static const cmsCIExyYTRIPLE CCIR_709_PRIMARIES = { { 0.640, 0.330, 1.0 }, { 0.300, 0.600, 1.0 }, { 0.150, 0.060, 1.0 } };
+static const double          DEFAULT_FILE_GAMMA = 0.45455; // = 1/2.2 (roughly, same accuracy as PNG, close enough)
 
 ImageCoderPng::ImageCoderPng(Image* img) : ImageCoder(IE_PNG, img)
 {
@@ -71,13 +72,18 @@ static void readData(png_structp pngPtr, png_bytep data, png_size_t length)
 	pThis->_dataCur += length;
 }
 
-
 void ImageCoderPng::read(const std::string & filename)
 {
-	FILE* pFile = fopen(filename.c_str(), "rb");
-	if (!pFile) 
-		throw std::runtime_error("Failed to open file "+filename+" for reading");
+	std::ifstream file(filename.c_str(), std::ios_base::binary);
+	if (file.fail())
+		throw std::runtime_error("failed to open PNG file " + filename);
 
+	read(file);
+}
+
+
+void ImageCoderPng::read(std::istream & stream)
+{
 	auto errorHandler = [](png_structp png, png_const_charp errorMsg) {
 		throw std::runtime_error(errorMsg);
 	};
@@ -91,7 +97,13 @@ void ImageCoderPng::read(const std::string & filename)
 	png_structp png = png_create_read_struct( PNG_LIBPNG_VER_STRING, nullptr /*(png_voidp)user_error_ptr*/, errorHandler,  warningHandler );
 	if (!png)
 		throw std::runtime_error("Failed to create PNG read structure");
-	
+
+	// there's a big discussion about the fact that libpng checks for "broken" sRGB profiles, which aren't really broken.
+	// turn that check off (skip check)
+#if defined(PNG_SKIP_sRGB_CHECK_PROFILE) && defined(PNG_SET_OPTION_SUPPORTED)
+	png_set_option(png, PNG_SKIP_sRGB_CHECK_PROFILE, PNG_OPTION_ON);
+#endif
+
 	png_infop pngInfo = nullptr, endInfo = nullptr;
 	try
 	{
@@ -107,14 +119,26 @@ void ImageCoderPng::read(const std::string & filename)
 #if 0
 		png_init_io(png, pFile);
 #else
-		fseek(pFile, 0, SEEK_END);
-		long pos = ftell(pFile);
-		_data = new char[pos];
-		_dataCur = _data;
-		_dataLeft = static_cast<size_t>(pos);
-		fseek(pFile, 0, SEEK_SET);
-		fread(_data, 1, _dataLeft, pFile);
-		fclose(pFile);
+		// for now, we read all the data at once to a buffer and work from there.
+		// only good for in-memory and files, not good for network files or such.
+
+		// get length of file:
+		stream.seekg(0, stream.end);
+		if (stream.fail())
+			throw std::runtime_error("Failed to get size of PNG file");
+		std::streamoff length = stream.tellg();
+		stream.seekg(0, stream.beg);
+		if (stream.fail())
+			throw std::runtime_error("Failed to get size of PNG file");
+
+		_data.reset(new char[length]);
+		_dataCur = _data.get();
+		_dataLeft = static_cast<size_t>(length);
+
+		stream.read(_data.get(), _dataLeft);
+		if (stream.fail())
+			throw std::runtime_error("Failed to read PNG file");
+
 		png_set_read_fn(png, this, readData);
 #endif
 
@@ -147,6 +171,11 @@ void ImageCoderPng::read(const std::string & filename)
 				dpiX = static_cast<float>(resX) * 0.0254f;
 				dpiY = static_cast<float>(resY) * 0.0254f;
 			}
+		}
+
+		if (interlaceMethod == PNG_INTERLACE_ADAM7)
+		{
+			int number_passes = png_set_interlace_handling(png);
 		}
 
 		// set up the image...
@@ -277,6 +306,8 @@ void ImageCoderPng::read(const std::string & filename)
 				hasChroma = true;
 				props->whitepoint[0] = wpx;
 				props->whitepoint[1] = wpy;
+				if (props->chromaticPrimaries.size() != 6) 
+					props->chromaticPrimaries.resize(6);
 				props->chromaticPrimaries[0] = rx;
 				props->chromaticPrimaries[1] = ry;
 				props->chromaticPrimaries[2] = gx;
@@ -423,21 +454,19 @@ void ImageCoderPng::read(const std::string & filename)
 //		fclose(pFile);
 		if ( _data )
 		{
-			delete[] _data;
-			_data = nullptr;
+			_data.reset();
 			_dataCur = nullptr;
 			_dataLeft = 0;
 		}
 		
 		onSubImageRead(1);	// we have read image #1
 	}
-	catch (std::exception)
+	catch (std::exception e)
 	{
 		png_destroy_read_struct(&png, &pngInfo, &endInfo);
 		if ( _data )
 		{
-			delete[] _data;
-			_data = nullptr;
+			_data.reset();
 			_dataCur = nullptr;
 			_dataLeft = 0;
 		}
@@ -454,5 +483,9 @@ void ImageCoderPng::read(const std::string & filename)
 // - if the image has an icc profile, we write that.
 void ImageCoderPng::write(const std::string & filename)
 {
-
+	throw std::runtime_error("writing PNG files not implemented");
+}
+void ImageCoderPng::write(std::ostream & stream)
+{
+	throw std::runtime_error("writing PNG files not implemented");
 }

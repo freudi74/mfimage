@@ -1,13 +1,13 @@
-#include <UnitTest++.h>
+#include <unittest++/UnitTest++.h>
 #include <list> 
 #include <string> 
 #include "../src/Image.h"
 #include "folders.h"
 
+#ifndef SKIP_JPEG_SUITE
+
 #define TEST_FILES TESTDATA SEPARATOR "jpg" SEPARATOR
 #define TEST_OUT   TESTOUT  SEPARATOR "jpg" SEPARATOR
-
-
 
 SUITE(JpegSuite)
 {
@@ -117,3 +117,4 @@ SUITE(JpegSuite)
 */
 }
 
+#endif

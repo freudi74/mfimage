@@ -23,9 +23,11 @@ public:
 	virtual bool canEncode() override;
 	virtual bool canEncode( PixelMode pixelMode ) override;
 	virtual void read(const std::string & filename) override;
+	virtual void read(std::istream & stream) override;
 	virtual void write(const std::string & filename) override;
+	virtual void write(std::ostream & stream) override;
 
 private:
-	void readNextPixel(std::ifstream & f, bool isRLE, uint8_t & pixelValue, uint8_t & runCount);
+	void readNextPixel(std::istream & f, bool isRLE, uint8_t & pixelValue, uint8_t & runCount);
 };
 

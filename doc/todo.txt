@@ -6,9 +6,6 @@ PNG Write
 JPEG2000 write
 JPEG2000 read options (colorspaces, tiles?)
 
-Write parameter
-Read parameter
-
 EXIF and co.?
 
 
@@ -68,3 +65,4 @@ JPEG: All known other than unspecified Alpha extension.
 =======================h
 JPEG2000: currently only srgb, gray, cmyk is read right. Only JP2 works. No Alpha.
 THere's a lot of stuff left to do (color space convertion?, Alpha channel, dpi, tiles?).
+OPenJPEG is slow and not good. Seems to auto-convert everything to sRGB.

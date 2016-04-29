@@ -44,12 +44,29 @@ bool ImageCoderGif::canEncode( PixelMode pixelMode )
 static const int InterlacedOffset[] = { 0, 4, 2, 1 }; /* The way Interlaced image should. */
 static const int InterlacedJumps[]  = { 8, 8, 4, 2 };    /* be read - offsets and jumps... */
 
+static const int readGifData(GifFileType *, GifByteType *, int)
+{
+	return 0;	// todo, once we switched to newer GLIB version!
+}
+
+void ImageCoderGif::read(std::istream& stream)
+{
+	// hardcore for now --- write to temp file and read from that file.
+	// unfortunately, in GIFLIB 5.1.1 and 5.1.2 there is an error in DGifOpen( to be used with a read function )
+	// so we can't use that before switching to a new GIFLIB version...
+	// 
+
+	std::string tempFileName = storeStreamToTempFile( stream );
+	read(tempFileName);
+}
+
+
 void ImageCoderGif::read(const std::string& filename)
 {
 	
 	std::lock_guard<std::mutex> lock( s_giflibMutex );
 	
-	auto fileCloser = [](FILE* p){ fclose(p); };
+	auto fileCloser = [](FILE* p){ /*if (p!=0) fclose(p);*/ };
 	std::unique_ptr<FILE, decltype(fileCloser)> pFile( fopen(filename.c_str(), "rb"), fileCloser );
 	if ( !pFile )
 	{
@@ -58,7 +75,11 @@ void ImageCoderGif::read(const std::string& filename)
 	
 	int gifErrorCode = 0;
 	auto gifFileCloser = [&gifErrorCode]( GifFileType* gif ){ DGifCloseFile(gif, &gifErrorCode); };
+#ifdef _WIN32
+	int fd = ::_fileno(pFile.get());
+#else
 	int fd = ::fileno(pFile.get());
+#endif
 	std::unique_ptr<GifFileType, decltype(gifFileCloser)> gif( DGifOpenFileHandle(fd,&gifErrorCode), gifFileCloser );
 
 	if ( !gif )
@@ -222,8 +243,8 @@ void ImageCoderGif::handleGraphicsExtensionBlock(void* extension, int blockNo, G
 	size_t len = gceBin[0];
 	if ( len != 4 || blockNo != 0 )
 		throw std::runtime_error( "ImageCoderGif: Unexpected GraphicsControlExtension: blockNo: " + std::to_string(blockNo) + " len: " + std::to_string(len) );
-	gce->transparencyFlag = gceBin[1] & 0x01;
-	gce->userInputFlag    = gceBin[1] & 0x02;
+	gce->transparencyFlag = ( gceBin[1] & 0x01 ) ? true : false;
+	gce->userInputFlag    = ( gceBin[1] & 0x02 ) ? true : false;
 	gce->disposalMethod   = ( gceBin[1] & 0x1c ) >> 2; // 0-7
 	gce->reserved         = ( gceBin[1] & 0xe0 ) >> 5; // 0-7
 	gce->delay10ms        = ( gceBin[3] << 8 ) | gceBin[2];
@@ -233,7 +254,13 @@ void ImageCoderGif::handleGraphicsExtensionBlock(void* extension, int blockNo, G
 void ImageCoderGif::write(const std::string& filename )
 {
 	std::lock_guard<std::mutex> lock( s_giflibMutex );
+	throw std::runtime_error("writing GIF files not implemented");
+}
 
+void ImageCoderGif::write(std::ostream& stream)
+{
+	std::lock_guard<std::mutex> lock(s_giflibMutex);
+	throw std::runtime_error("writing GIF files not implemented");
 }
 /*
 std::string ImageCoderGif::getLastErrorText()

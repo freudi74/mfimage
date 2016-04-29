@@ -27,15 +27,13 @@ public:
 	virtual bool canEncode() = 0;
 	virtual bool canEncode( PixelMode pixelMode ) = 0;
 	virtual void read(const std::string & filename ) = 0;
-//  virtual void read(std::istream & stream) = 0;
+    virtual void read(std::istream & stream) = 0;
 	virtual void write(const std::string & filename ) = 0;
-//  virtual void write(std::ostream & stream) = 0;
+    virtual void write(std::ostream & stream) = 0;
 	
 	static ImageCoder* createCoder( ImageEncoding encoding, Image* img, ImageCoderProperties* props );
 	static ImageEncoding determineImageType( std::istream & stream );
 	
-	
-
 protected:
 	ImageEncoding         encoderType;
 	Image*                image;
@@ -44,5 +42,7 @@ protected:
 	// tools due to bad design ...
 	std::string & getIccProfile();
 	bool onSubImageRead(size_t subImage);
+	// this needs to go away once all readers support reading from iStream
+	std::string storeStreamToTempFile( std::istream & stream );
 };
 

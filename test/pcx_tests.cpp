@@ -1,9 +1,11 @@
-#include <UnitTest++.h>
+#include <unittest++/UnitTest++.h>
 #include <list> 
 #include <string> 
 #include "../src/Image.h"
 
 #include "folders.h"
+
+#ifndef SKIP_PCX_SUITE
 
 #define TEST_FILES TESTDATA SEPARATOR "pcx" SEPARATOR
 #define TEST_OUT   TESTOUT  SEPARATOR "pcx" SEPARATOR
@@ -41,3 +43,5 @@ SUITE(PcxSuite)
 		END_TEST();
 	}
 }
+
+#endif

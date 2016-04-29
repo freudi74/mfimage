@@ -1,6 +1,8 @@
-#include <UnitTest++.h>
+#include <unittest++/UnitTest++.h>
 
-#include <unistd.h>
+#if !defined(_WIN32)
+#  include <unistd.h>
+#endif
 #include <stdio.h>
 #include <iomanip>
 #include <iostream>
@@ -9,6 +11,8 @@
 #include <stdexcept>
 
 #include "folders.h"
+
+#ifndef SKIP_GIF_SUITE
 
 #define TEST_FILES TESTDATA SEPARATOR "gif" SEPARATOR
 #define TEST_OUT   TESTOUT  SEPARATOR "gif" SEPARATOR
@@ -29,6 +33,7 @@ TEST(Gif87aRead)
 	img.write( TEST_OUT "bugs_c_pb.tiff", IE_TIFF, &props );
 	// compare results against a reference?
 	END_TEST();
+
 }
 
 TEST(Gif89aRead)
@@ -55,5 +60,7 @@ TEST(Gif89aRead)
 	}
 	// compare results against a reference?
 	END_TEST();
+
 }
 
+#endif

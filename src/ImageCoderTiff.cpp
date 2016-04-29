@@ -13,6 +13,7 @@
 #include "ImageCoderTiff.h"
 
 #include <tiffio.h>
+#include <tiffio.hxx>
 #include <ctime>
 
 
@@ -53,21 +54,58 @@ bool ImageCoderTiff::canEncode( PixelMode pixelMode )
 	return false;
 }
 
+
+// reads baseline tiffs, except "mask only" - plus "SEPARATED" assuming CMYK (4 samples per pixel) or RGB (3 samples per pixel)
+void ImageCoderTiff::read(const std::string & filename)
+{
+	TIFF* tif = TIFFOpen(filename.c_str(), "rM");
+	if (tif == nullptr)
+		throw std::runtime_error("failed to open TIFF file " + filename);
+
+	readAndClose(tif);
+}
+
+void ImageCoderTiff::read(std::istream & stream)
+{
+	TIFF* tif = TIFFStreamOpen("memory", &stream);
+	if (tif == nullptr)
+		throw std::runtime_error("failed to open TIFF stream");
+
+	readAndClose(tif);
+}
+
 void ImageCoderTiff::write(const std::string & filename)
 {
-	uint16_t compression = static_cast<uint16>( props->compression );
-	uint16_t planarConfiguartion = props->writeSeparatedPlanes ? PLANARCONFIG_SEPARATE : PLANARCONFIG_CONTIG;
-	// todo: allow to write planar files. Not yet implemented.
-
 	TIFF* tif = TIFFOpen(filename.c_str(), "w");
 	if (tif == nullptr)
 		throw std::runtime_error("failed to open TIFF file " + filename + " for writing");
 
+	writeAndClose(tif);
+}
+
+void ImageCoderTiff::write(std::ostream & stream)
+{
+	TIFF* tif = TIFFStreamOpen("memory", &stream);
+	if (tif == nullptr)
+		throw std::runtime_error("failed to open TIFF stream for writing");
+
+	writeAndClose(tif);
+}
+
+void ImageCoderTiff::writeAndClose( TIFF* tif )
+{
+	uint16_t compression = static_cast<uint16>(props->compression);
+	uint16_t planarConfiguartion = props->writeSeparatedPlanes ? PLANARCONFIG_SEPARATE : PLANARCONFIG_CONTIG;
+	// todo: allow to write planar files. Not yet implemented.
+
 	try
 	{
-		if (!TIFFSetField(tif, TIFFTAG_SOFTWARE, "mfimage library 0.0.0.1"))
-			throw std::runtime_error("failed to write tiff");
-		
+		if (props->embedOtherInfo)
+		{
+			if (!TIFFSetField(tif, TIFFTAG_SOFTWARE, MFIMAGELIB_ID) )
+				throw std::runtime_error("failed to write tiff");
+		}
+
 		if (!TIFFSetField(tif, TIFFTAG_IMAGEWIDTH, image->getWidth()))
 			throw std::runtime_error("failed to write tiff");
 
@@ -82,11 +120,11 @@ void ImageCoderTiff::write(const std::string & filename)
 
 		if (!TIFFSetField(tif, TIFFTAG_YRESOLUTION, static_cast<float>(image->getResolutionY())))
 			throw std::runtime_error("failed to write tiff");
-		
+
 		if (!TIFFSetField(tif, TIFFTAG_FILLORDER, FILLORDER_MSB2LSB))
 			throw std::runtime_error("failed to write tiff");
 
-		if (!TIFFSetField(tif, TIFFTAG_COMPRESSION, compression ))
+		if (!TIFFSetField(tif, TIFFTAG_COMPRESSION, compression))
 			throw std::runtime_error("failed to write tiff");
 
 		if (!TIFFSetField(tif, TIFFTAG_PLANARCONFIG, planarConfiguartion))
@@ -100,15 +138,15 @@ void ImageCoderTiff::write(const std::string & filename)
 
 		switch (image->getPixelMode())
 		{
-		// todo: AGRAY and CMYKA!
+			// todo: AGRAY and CMYKA!
 		case PixelMode::GRAY8:   bpp = 8;  spp = 1; pmi = PHOTOMETRIC_MINISBLACK; break;
 		case PixelMode::GRAY16:  bpp = 16; spp = 1; pmi = PHOTOMETRIC_MINISBLACK; break;
-		case PixelMode::AGRAY8:  bpp = 8;  spp = 2; pmi = PHOTOMETRIC_MINISBLACK; internalAlphaPlaneReorder=true; alpha = true;	break;
-		case PixelMode::AGRAY16: bpp = 16; spp = 2; pmi = PHOTOMETRIC_MINISBLACK; internalAlphaPlaneReorder=true; alpha = true;	break;
+		case PixelMode::AGRAY8:  bpp = 8;  spp = 2; pmi = PHOTOMETRIC_MINISBLACK; internalAlphaPlaneReorder = true; alpha = true;	break;
+		case PixelMode::AGRAY16: bpp = 16; spp = 2; pmi = PHOTOMETRIC_MINISBLACK; internalAlphaPlaneReorder = true; alpha = true;	break;
 		case PixelMode::RGB8:    bpp = 8;  spp = 3; pmi = PHOTOMETRIC_RGB;        break;
 		case PixelMode::RGB16:   bpp = 16; spp = 3; pmi = PHOTOMETRIC_RGB;        break;
-		case PixelMode::ARGB8:   bpp = 8;  spp = 4; pmi = PHOTOMETRIC_RGB;        internalAlphaPlaneReorder=0; alpha = true;	break;
-		case PixelMode::ARGB16:  bpp = 16; spp = 4; pmi = PHOTOMETRIC_RGB;        internalAlphaPlaneReorder=0; alpha = true;	break;
+		case PixelMode::ARGB8:   bpp = 8;  spp = 4; pmi = PHOTOMETRIC_RGB;        internalAlphaPlaneReorder = 0; alpha = true;	break;
+		case PixelMode::ARGB16:  bpp = 16; spp = 4; pmi = PHOTOMETRIC_RGB;        internalAlphaPlaneReorder = 0; alpha = true;	break;
 		case PixelMode::CMYK8:   bpp = 8;  spp = 4; pmi = PHOTOMETRIC_SEPARATED;  break;
 		case PixelMode::CMYK16:  bpp = 16; spp = 4; pmi = PHOTOMETRIC_SEPARATED;  break;
 		case PixelMode::CMYKA8:  bpp = 8;  spp = 5; pmi = PHOTOMETRIC_SEPARATED;  alpha = true;	break;
@@ -121,94 +159,99 @@ void ImageCoderTiff::write(const std::string & filename)
 		if (!TIFFSetField(tif, TIFFTAG_PHOTOMETRIC, pmi))
 			throw std::runtime_error("failed to write tiff");
 
-		if ( pmi == PHOTOMETRIC_SEPARATED )
+		if (pmi == PHOTOMETRIC_SEPARATED)
+		{
 			if (!TIFFSetField(tif, TIFFTAG_INKSET, INKSET_CMYK))
 				throw std::runtime_error("failed to write tiff");
+		}
 
 		if (!TIFFSetField(tif, TIFFTAG_SAMPLESPERPIXEL, spp))
 			throw std::runtime_error("failed to write tiff");
 
-
-		if ( alpha ) 
-		{ 
+				if (alpha)
+		{
 			uint16_t extraSampleCount = 1;
 			uint16_t extraSampleTypes[1] = { EXTRASAMPLE_ASSOCALPHA };
 			if (!TIFFSetField(tif, TIFFTAG_EXTRASAMPLES, extraSampleCount, extraSampleTypes))
 				throw std::runtime_error("failed to write tiff");
 		}
-		else
-			if (!TIFFSetField(tif, TIFFTAG_EXTRASAMPLES, 0, nullptr))
-				throw std::runtime_error("failed to write tiff");
+		else if (!TIFFSetField(tif, TIFFTAG_EXTRASAMPLES, 0, nullptr))
+			throw std::runtime_error("failed to write tiff");
 
 		if (!TIFFSetField(tif, TIFFTAG_ORIENTATION, ORIENTATION_TOPLEFT))
 			throw std::runtime_error("failed to write tiff");
 
 		if (!getIccProfile().empty())
+		{
 			if (!TIFFSetField(tif, TIFFTAG_ICCPROFILE, static_cast<uint32_t>(getIccProfile().size()), getIccProfile().c_str()))
 				throw std::runtime_error("failed to embedd icc profile to tiff");
-
-
-		std::stringstream timestamp;
-		auto now_c = std::time(NULL);
-#if defined(__GNUC__) && (__GNUC__ < 5)
-		// workarround for std::put_time not implemented before gcc 5
-		{
-			struct tm* now_loc = std::localtime( &now_c );
-			char buffer[128] = {0};
-			strftime( buffer, 127, "%Y:%m:%d %H:%M:%S", now_loc );
-			timestamp << std::string( buffer );
 		}
+
+		if (props->embedTimestamp)
+		{
+			std::stringstream timestamp;
+			auto now_c = std::time(NULL);
+#if defined(__GNUC__) && (__GNUC__ < 5)
+			// workarround for std::put_time not implemented before gcc 5
+			{
+				struct tm* now_loc = std::localtime(&now_c);
+				char buffer[128] = { 0 };
+				strftime(buffer, 127, "%Y:%m:%d %H:%M:%S", now_loc);
+				timestamp << std::string(buffer);
+			}
 #else
-		timestamp << std::put_time(std::localtime(&now_c), "%Y:%m:%d %H:%M:%S");
+			timestamp << std::put_time(std::localtime(&now_c), "%Y:%m:%d %H:%M:%S");
 #endif
-		if (!TIFFSetField(tif, TIFFTAG_DATETIME, timestamp.str().c_str()))
-			throw std::runtime_error("failed to write tiff");
+			if (!TIFFSetField(tif, TIFFTAG_DATETIME, timestamp.str().c_str()))
+				throw std::runtime_error("failed to write tiff");
+		}
 
 		// WRITING IMAGE DATA
 		// Note that we don't support writing tiles ...
 		// Further note that the planar mode is a bit tricky; you need to write all LINES of one PLANE first ... 
 		// There's no random access in the way it's written.
 
-		size_t bypp = bpp/8;
-		uint32_t planarLineLength = image->getWidth() * bypp;
-		uint32_t linebytes = spp * planarLineLength;   // in planar config, each line one after the other ...
-		std::unique_ptr<char[]> lineBuffer( new char[linebytes] );	// needed for pixel organizations that we can't directly write to the file... Alpha and planar. ANd actually, for planar, the size is too big.
+		size_t bypp = bpp / 8;
+		size_t planarLineLength = image->getWidth() * bypp;
+		size_t linebytes = spp * planarLineLength;   // in planar config, each line one after the other ...
+		std::unique_ptr<char[]> lineBuffer(new char[linebytes]);	// needed for pixel organizations that we can't directly write to the file... Alpha and planar. ANd actually, for planar, the size is too big.
 
 		// We set the strip size of the file to be size of one row of pixels ... 
-		uint32_t rowsPerStrip = TIFFDefaultStripSize(tif, 0 );
-		if (!TIFFSetField(tif, TIFFTAG_ROWSPERSTRIP, rowsPerStrip)) 
+		uint32_t rowsPerStrip = TIFFDefaultStripSize(tif, 0);
+		if (!TIFFSetField(tif, TIFFTAG_ROWSPERSTRIP, rowsPerStrip))
 			throw std::runtime_error("failed to write tiff");
 
 		// stuff below is actually like for planar ...
-		size_t numPlanes =  props->writeSeparatedPlanes ? spp : 1;
-		std::unique_ptr<size_t[]> internalPlaneIndex( new size_t[numPlanes] );
-		if ( props->writeSeparatedPlanes )
+		size_t numPlanes = props->writeSeparatedPlanes ? spp : 1;
+		std::unique_ptr<size_t[]> internalPlaneIndex(new size_t[numPlanes]);
+		if (props->writeSeparatedPlanes)
 		{
-			for ( size_t iPlaneExternal=0; iPlaneExternal<numPlanes; iPlaneExternal++ )
-				internalPlaneIndex[iPlaneExternal] = iPlaneExternal + (internalAlphaPlaneReorder?1:0); // when alpha is present in AGRAY, ARGB: 0->1, 1->2... n=0
-			if ( internalAlphaPlaneReorder )
-				internalPlaneIndex[numPlanes-1] = 0; // this is the n=0 mentioned above...
+			for (size_t iPlaneExternal = 0; iPlaneExternal < numPlanes; iPlaneExternal++)
+				internalPlaneIndex[iPlaneExternal] = iPlaneExternal + (internalAlphaPlaneReorder ? 1 : 0); // when alpha is present in AGRAY, ARGB: 0->1, 1->2... n=0
+			if (internalAlphaPlaneReorder)
+				internalPlaneIndex[numPlanes - 1] = 0; // this is the n=0 mentioned above...
 		}
-		size_t planePixelOffset = bypp*(spp-1);
-		
+		size_t planePixelOffset = bypp*(spp - 1);
+
 		// we loop through each plane --- of which there's only one if we write contingous
 
-		for ( size_t iPlane=0; iPlane<numPlanes; iPlane++ )
+		for (uint16_t iPlane = 0; iPlane < numPlanes; iPlane++)
 		{
-			for (size_t iLine = 0; iLine < image->getHeight(); iLine++)
+			for (uint32_t iLine = 0; iLine < image->getHeight(); iLine++)
 			{
 				uint8_t* line = image->getLine(iLine);
-				
-				if ( props->writeSeparatedPlanes )
+
+				if (props->writeSeparatedPlanes)
 				{
 					uint8_t* p = reinterpret_cast<uint8_t*>(lineBuffer.get());
-					uint8_t* q = reinterpret_cast<uint8_t*>(line); 
+					uint8_t* q = reinterpret_cast<uint8_t*>(line);
 					q += bypp*internalPlaneIndex[iPlane]; // skip to the first sample of the internal plane we are looking for and go from there.
 					for (size_t iCol = 0; iCol < image->getWidth(); iCol++)
 					{
 						*p++ = *q++;
-						if ( bypp==2 ) *p++ = *q++;	// much faster than a for-loop over bytes - but needs adaption if we ever write larger than 16 bit/pixel (e.g. float)
-						q+=planePixelOffset; // jump to next pixel in same plane
+						if (bypp == 2)
+							*p++ = *q++;	// much faster than a for-loop over bytes - but needs adaption if we ever write larger than 16 bit/pixel (e.g. float)
+						q += planePixelOffset; // jump to next pixel in same plane
 					}
 					TIFFWriteScanline(tif, lineBuffer.get(), iLine, iPlane);
 				}
@@ -226,63 +269,63 @@ void ImageCoderTiff::write(const std::string & filename)
 					case PixelMode::CMYKA16:
 						TIFFWriteScanline(tif, line, iLine, 0);
 						break;
-						
+
 					case PixelMode::ARGB8: // todo: planar from here down 
 					{
-						uint8_t* p = reinterpret_cast<uint8_t*>(lineBuffer.get());
-						uint8_t* q = reinterpret_cast<uint8_t*>(line);
-						for (size_t iCol = 0; iCol < image->getWidth(); iCol++)
-						{
-							*p++ = q[1];	// R
-							*p++ = q[2];	// G
-							*p++ = q[3];	// B
-							*p++ = q[0];	// A
-							q += 4;
-						}
-						TIFFWriteScanline(tif, lineBuffer.get(), iLine, 0);
-						break;
+											   uint8_t* p = reinterpret_cast<uint8_t*>(lineBuffer.get());
+											   uint8_t* q = reinterpret_cast<uint8_t*>(line);
+											   for (size_t iCol = 0; iCol < image->getWidth(); iCol++)
+											   {
+												   *p++ = q[1];	// R
+												   *p++ = q[2];	// G
+												   *p++ = q[3];	// B
+												   *p++ = q[0];	// A
+												   q += 4;
+											   }
+											   TIFFWriteScanline(tif, lineBuffer.get(), iLine, 0);
+											   break;
 					}
-					case PixelMode::ARGB16: 
+					case PixelMode::ARGB16:
 					{
-						uint16_t* p = reinterpret_cast<uint16_t*>(lineBuffer.get());
-						uint16_t* q = reinterpret_cast<uint16_t*>(line);
-						for (size_t iCol = 0; iCol < image->getWidth(); iCol++)
-						{
-							*p++ = q[1];	// R
-							*p++ = q[2];	// G
-							*p++ = q[3];	// B
-							*p++ = q[0];	// A
-							q += 4;
-						}
-						TIFFWriteScanline(tif, lineBuffer.get(), iLine, 0);
-						break;
+											  uint16_t* p = reinterpret_cast<uint16_t*>(lineBuffer.get());
+											  uint16_t* q = reinterpret_cast<uint16_t*>(line);
+											  for (size_t iCol = 0; iCol < image->getWidth(); iCol++)
+											  {
+												  *p++ = q[1];	// R
+												  *p++ = q[2];	// G
+												  *p++ = q[3];	// B
+												  *p++ = q[0];	// A
+												  q += 4;
+											  }
+											  TIFFWriteScanline(tif, lineBuffer.get(), iLine, 0);
+											  break;
 					}
-					case PixelMode::AGRAY8: 
+					case PixelMode::AGRAY8:
 					{
-						uint8_t* p = reinterpret_cast<uint8_t*>(lineBuffer.get());
-						uint8_t* q = reinterpret_cast<uint8_t*>(line);
-						for (size_t iCol = 0; iCol < image->getWidth(); iCol++)
-						{
-							*p++ = q[1];	// G
-							*p++ = q[0];	// A
-							q += 2;
-						}
-						TIFFWriteScanline(tif, lineBuffer.get(), iLine, 0);
-						break;
-						
+											  uint8_t* p = reinterpret_cast<uint8_t*>(lineBuffer.get());
+											  uint8_t* q = reinterpret_cast<uint8_t*>(line);
+											  for (size_t iCol = 0; iCol < image->getWidth(); iCol++)
+											  {
+												  *p++ = q[1];	// G
+												  *p++ = q[0];	// A
+												  q += 2;
+											  }
+											  TIFFWriteScanline(tif, lineBuffer.get(), iLine, 0);
+											  break;
+
 					}
-					case PixelMode::AGRAY16: 
+					case PixelMode::AGRAY16:
 					{
-						uint16_t* p = reinterpret_cast<uint16_t*>(lineBuffer.get());
-						uint16_t* q = reinterpret_cast<uint16_t*>(line);
-						for (size_t iCol = 0; iCol < image->getWidth(); iCol++)
-						{
-							*p++ = q[1];	// G
-							*p++ = q[0];	// A
-							q += 2;
-						}
-						TIFFWriteScanline(tif, lineBuffer.get(), iLine, 0);
-						break;
+											   uint16_t* p = reinterpret_cast<uint16_t*>(lineBuffer.get());
+											   uint16_t* q = reinterpret_cast<uint16_t*>(line);
+											   for (size_t iCol = 0; iCol < image->getWidth(); iCol++)
+											   {
+												   *p++ = q[1];	// G
+												   *p++ = q[0];	// A
+												   q += 2;
+											   }
+											   TIFFWriteScanline(tif, lineBuffer.get(), iLine, 0);
+											   break;
 					}
 					} // end of switch(pixelMode)
 				} // end of contingous mode
@@ -297,14 +340,8 @@ void ImageCoderTiff::write(const std::string & filename)
 	}
 }
 
-// reads baseline tiffs, except "mask only" - plus "SEPARATED" assuming CMYK (4 samples per pixel) or RGB (3 samples per pixel)
-void ImageCoderTiff::read( const std::string & filename )
+void ImageCoderTiff::readAndClose(TIFF* tif)
 {
-	std::string x(filename);
-	TIFF* tif = TIFFOpen( x.c_str(), "rM");
-	if ( tif == nullptr )
-		throw std::runtime_error("failed to open TIFF file " + filename);
-	
 	try
 	{
 		int imageCount = 0;
@@ -428,13 +465,13 @@ void ImageCoderTiff::read( const std::string & filename )
 			_tiles_numPlanes = 0;
 			if ( tiled ) 
 			{
-				size_t   totalTileSize = TIFFTileSize(tif);
+				tmsize_t   totalTileSize = TIFFTileSize(tif);
 				tdata_t  bufSingleTile = _TIFFmalloc(totalTileSize);
 				tmsize_t scanlinesize  = TIFFScanlineSize(tif);
 				tmsize_t tilelinesize  = TIFFTileRowSize(tif);
 				// note that for a planar configuration, each tile contains one PLANE only... So our total buffer needs to increaase for planar config
 				_tiles_numPlanes = 1;
-				_tiles_planeSize = height*scanlinesize;
+				_tiles_planeSize = static_cast<uint32_t>(height*scanlinesize);
 				if ( isSeparated )
 				{
 //					_tiles_numPlanes = samplesPerPixel + (( extraAlphaSample!=-1 ) ? 1 : 0 );
@@ -442,7 +479,7 @@ void ImageCoderTiff::read( const std::string & filename )
 				}
 				tiledImageBuffer.reset( new uint8_t[_tiles_planeSize*_tiles_numPlanes] );
 				
-				for (size_t iPlane=0; iPlane<_tiles_numPlanes; iPlane++ )
+				for (uint16_t iPlane = 0; iPlane<_tiles_numPlanes; iPlane++)
 				{
 					// planeIndex is the index of the plane in the TIFF file.
 					// our internal index is iPlane.
@@ -462,7 +499,7 @@ void ImageCoderTiff::read( const std::string & filename )
 								std::memcpy( tiledImageBuffer.get()+internalPlaneOffset+y*scanlinesize+tileLineStartByte, bufLine, thisTileLineSize );
 								bufLine += tilelinesize;
 							}
-							tileLineStartByte += tilelinesize;
+							tileLineStartByte += static_cast<size_t>(tilelinesize);
 						}
 					}
 				}
@@ -492,7 +529,7 @@ void ImageCoderTiff::read( const std::string & filename )
 				if (bitsPerSample != 1 && bitsPerSample != 4 && bitsPerSample != 8 && bitsPerSample != 16)
 					throw std::runtime_error("unsupported BitsPerSample for grayscale image: " + std::to_string(bitsPerSample));
 
-				readBilevelOrGray(tif, width, height, dpiX, dpiY, samplesPerPixel, bitsPerSample, extraAlphaSample, inverted, isSeparated, fillOrder, halftoneHints_White, halftoneHints_Black, tiledImageBuffer.get() );
+				readBilevelOrGray(tif, width, height, dpiX, dpiY, samplesPerPixel, bitsPerSample, extraAlphaSample, inverted, isSeparated, halftoneHints_White, halftoneHints_Black, tiledImageBuffer.get() );
 				break;
 				
 			case PHOTOMETRIC_RGB:	/* RGB color model */
@@ -583,7 +620,7 @@ void ImageCoderTiff::read( const std::string & filename )
 }
 
 // same as TiffReadScanLine, but reads line either from tiled image buffer or actually calls TiffReadScanLine
-int ImageCoderTiff::readscanline(TIFF* tif, uint8_t* tiledImageBuffer, size_t scanlinesize, void* dest, uint32_t row, uint16_t sample/*=0*/ )
+int ImageCoderTiff::readscanline(TIFF* tif, uint8_t* tiledImageBuffer, uint32_t scanlinesize, void* dest, uint32_t row, uint16_t sample/*=0*/)
 {
 	if ( tiledImageBuffer )
 	{
@@ -596,13 +633,12 @@ int ImageCoderTiff::readscanline(TIFF* tif, uint8_t* tiledImageBuffer, size_t sc
 	}	
 }
 
-void ImageCoderTiff::readBilevelOrGray(TIFF* tif, uint32_t width, uint32_t height, double dpiX, double dpiY, uint16_t samplesPerPixel, uint16_t bitsPerSample, int extraAlphaSample, bool inverted, bool separated, uint16_t fillOrder, uint16_t highlight, uint16_t shadow, uint8_t* tiledImageBuffer )
+void ImageCoderTiff::readBilevelOrGray(TIFF* tif, uint32_t width, uint32_t height, double dpiX, double dpiY, uint16_t samplesPerPixel, uint16_t bitsPerSample, int extraAlphaSample, bool inverted, bool separated, uint16_t highlight, uint16_t shadow, uint8_t* tiledImageBuffer )
 {
 	bool hasAlpha = samplesPerPixel > 1 && extraAlphaSample != -1;
 
-	static const unsigned char oneBitMask_LSB2MSB[8] = { 0x80, 0x40, 0x20, 0x10, 0x08, 0x04, 0x02, 0x01 };
-	static const unsigned char oneBitMask_MSB2LSB[8] = { 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80 };
-	const unsigned char* oneBitMask = (fillOrder == FILLORDER_MSB2LSB) ? oneBitMask_MSB2LSB : oneBitMask_LSB2MSB;
+	// with ther functions we are using, libtiff is already internally auto-corrcting the fillorder with TIFFReverseBits. We don't have to care about it. So we are always assuming MSB2LSB
+	static const unsigned char oneBitMask[8] = { 0x80, 0x40, 0x20, 0x10, 0x08, 0x04, 0x02, 0x01 };
 	tdata_t buf;
 	tmsize_t scanlinesize = TIFFScanlineSize(tif);
 	buf = _TIFFmalloc(scanlinesize);
@@ -650,7 +686,7 @@ void ImageCoderTiff::readBilevelOrGray(TIFF* tif, uint32_t width, uint32_t heigh
 	{
 		if ( samplesPerPixel == 1 && ( bitsPerSample == 8 || bitsPerSample == 16 ) && (! inverted) && (! halftoneHints) )
 		{
-			readscanline( tif, tiledImageBuffer, scanlinesize, image->getLine(row), row );
+			readscanline( tif, tiledImageBuffer, static_cast<uint32_t>(scanlinesize), image->getLine(row), row );
 		}
 		else if ( separated )
 		{
@@ -661,7 +697,7 @@ void ImageCoderTiff::readBilevelOrGray(TIFF* tif, uint32_t width, uint32_t heigh
 			// todo: tiles
 			uint8_t* data = image->getLine(row);
 			uint16_t* data16 = reinterpret_cast<uint16_t*>(data);
-			readscanline( tif, tiledImageBuffer, scanlinesize, buf, row );
+			readscanline(tif, tiledImageBuffer, static_cast<uint32_t>(scanlinesize), buf, row);
 			uint8_t val8;
 			uint16_t val16;
 			int offset = 0;
@@ -760,7 +796,7 @@ void ImageCoderTiff::readRGB(TIFF* tif, uint32_t width, uint32_t height, double 
 			{
 				uint8_t* lineData = image->getLine(row); // start of internal data row.
 //				TIFFReadScanline(tif, buf, row, planeIndizesInTiff[plane]); // read to internal buffer
-				readscanline( tif, tiledImageBuffer, scanlinesize, buf, row, planeIndizesInTiff[plane] );
+				readscanline(tif, tiledImageBuffer, static_cast<uint32_t>(scanlinesize), buf, row, planeIndizesInTiff[plane]);
 				for (uint32_t col = 0; col < width; col++)
 				{
 					int planeOffset = (samplesPerPixelInternal * col) + (plane - rgbOffset);
@@ -775,13 +811,13 @@ void ImageCoderTiff::readRGB(TIFF* tif, uint32_t width, uint32_t height, double 
 		{
 			if ( samplesPerPixel==3 ) // RGB8 or RGB16
 //				TIFFReadScanline(tif, getLine(row), row);
-				readscanline( tif, tiledImageBuffer, scanlinesize, image->getLine(row), row );
+				readscanline(tif, tiledImageBuffer, static_cast<uint32_t>(scanlinesize), image->getLine(row), row);
 			else
 			{
 				int samplesPerPixelInternal = hasAlpha ? 4 : 3;	// if we have an alpha, we have 4 samples (ARGB) per pixel in our INTERNAL otherwise 3 (RGB)
 				uint8_t* data = image->getLine(row);
 //				TIFFReadScanline(tif, buf, row);
-				readscanline( tif, tiledImageBuffer, scanlinesize, buf, row );
+				readscanline(tif, tiledImageBuffer, static_cast<uint32_t>(scanlinesize), buf, row);
 				for (uint32_t col = 0; col < width; col++)
 				{
 					if (bitsPerSample == 16)
@@ -848,7 +884,7 @@ void ImageCoderTiff::readCMYK(TIFF* tif, uint32_t width, uint32_t height, double
 			{
 				uint8_t* data = image->getLine(row);
 //				TIFFReadScanline(tif, buf, row, planeIndizesInTiff[plane]);
-				readscanline( tif, tiledImageBuffer, scanlinesize, buf, row, planeIndizesInTiff[plane] ); // untested for tiles!!!! PROBABLY WRONG
+				readscanline(tif, tiledImageBuffer, static_cast<uint32_t>(scanlinesize), buf, row, planeIndizesInTiff[plane]); // untested for tiles!!!! PROBABLY WRONG
 				for (uint32_t col = 0; col < width; col++)
 				{
 					int planeOffset = (samplesPerPixelInternal * col) + plane;
@@ -867,12 +903,12 @@ void ImageCoderTiff::readCMYK(TIFF* tif, uint32_t width, uint32_t height, double
 		{
 			if ( samplesPerPixel == 4 || (samplesPerPixel==5 && hasAlpha && extraAlphaSample==0) )
 //				TIFFReadScanline(tif, getLine(row), row);
-				readscanline( tif, tiledImageBuffer, scanlinesize, image->getLine(row), row ); // untested for tiles!!!! PROBABLY WRONG
+				readscanline(tif, tiledImageBuffer, static_cast<uint32_t>(scanlinesize), image->getLine(row), row); // untested for tiles!!!! PROBABLY WRONG
 			else
 			{
 				void * data = image->getLine(row);
 //				TIFFReadScanline(tif, buf, row);
-				readscanline( tif, tiledImageBuffer, scanlinesize, buf, row ); // untested for tiles!!!! PROBABLY WRONG
+				readscanline(tif, tiledImageBuffer, static_cast<uint32_t>(scanlinesize), buf, row); // untested for tiles!!!! PROBABLY WRONG
 				for (uint32_t col = 0; col < width; col++)
 				{
 					// todo: alpha support for samples per Pixel != 5...
@@ -955,7 +991,7 @@ void ImageCoderTiff::readRGBPalette(TIFF* tif, uint32_t width, uint32_t height, 
 	for (uint32_t row = 0; row < height; row++)
 	{
 //		TIFFReadScanline(tif, buf, row);
-		readscanline( tif, tiledImageBuffer, scanlinesize, buf, row ); // untested for tiles!!!! PROBABLY WRONG
+		readscanline(tif, tiledImageBuffer, static_cast<uint32_t>(scanlinesize), buf, row); // untested for tiles!!!! PROBABLY WRONG
 		void* dataLine = image->getLine(row);
 		uint8_t *in = reinterpret_cast<uint8_t*>(buf);
 		for (uint32_t col = 0; col < width; col++)

@@ -24,7 +24,10 @@ public:
 	virtual bool canEncode() override;
 	virtual bool canEncode( PixelMode pixelMode ) override;
 	virtual void read( const std::string & filename ) override;
-	virtual void write( const std::string & filename ) override;
+	virtual void read( std::istream & stream ) override;
+	virtual void write( const std::string & filename) override;
+	virtual void write( std::ostream & stream ) override;
+
 
 private:
 	unsigned char getColorIndex( const unsigned char* line, size_t pixelNo, uint32_t bitsPerPixel );

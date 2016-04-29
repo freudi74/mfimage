@@ -1,1 +1,0 @@
-#include "ImageCoderProperties.h"

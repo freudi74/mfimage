@@ -32,6 +32,10 @@
     <VirtualDirectory Name="win">
       <File Name="win/targetver.h"/>
     </VirtualDirectory>
+    <VirtualDirectory Name="userCoders">
+      <File Name="userCoders/UserCoder_Springboard.h"/>
+      <File Name="userCoders/UserCoder_Springboard.cpp"/>
+    </VirtualDirectory>
     <File Name="ColorManager.cpp"/>
     <File Name="ColorManager.h"/>
     <File Name="Image.cpp"/>
@@ -40,28 +44,32 @@
     <File Name="ImageCoder.h"/>
     <File Name="ImageCoderBitmap.cpp"/>
     <File Name="ImageCoderBitmap.h"/>
+    <File Name="ImageCoderGif.cpp"/>
+    <File Name="ImageCoderGif.h"/>
     <File Name="ImageCoderJpeg.cpp"/>
     <File Name="ImageCoderJpeg.h"/>
+    <File Name="ImageCoderJpeg2000.cpp"/>
+    <File Name="ImageCoderJpeg2000.h"/>
     <File Name="ImageCoderPcx.cpp"/>
     <File Name="ImageCoderPcx.h"/>
     <File Name="ImageCoderPng.h"/>
-    <File Name="ImageCoderTiff.cpp"/>
-    <File Name="ImageCoderTiff.h"/>
-    <File Name="TimeStamper.cpp"/>
-    <File Name="TimeStamper.h"/>
-    <File Name="stdafx.cpp"/>
-    <File Name="stdafx.h"/>
-    <File Name="ImageCoderGif.cpp"/>
-    <File Name="ImageCoderGif.h"/>
     <File Name="ImageCoderPng.cpp"/>
+    <File Name="ImageCoderProperties.h"/>
     <File Name="ImageCoderTarga.cpp"/>
     <File Name="ImageCoderTarga.h"/>
+    <File Name="ImageCoderTiff.cpp"/>
+    <File Name="ImageCoderTiff.h"/>
+    <File Name="memory_streambuf.cpp"/>
+    <File Name="memory_streambuf.h"/>
     <File Name="PixelMode.cpp"/>
     <File Name="PixelMode.h"/>
-    <File Name="ImageCoderJpeg2000.cpp"/>
-    <File Name="ImageCoderJpeg2000.h"/>
-    <File Name="ImageCoderProperties.cpp"/>
-    <File Name="ImageCoderProperties.h"/>
+    <File Name="stdafx.cpp"/>
+    <File Name="stdafx.h"/>
+    <File Name="TimeStamper.cpp"/>
+    <File Name="TimeStamper.h"/>
+    <File Name="TimeStamper.cpp"/>
+    <File Name="TimeStamper.h"/>
+    <File Name="version.h"/>
   </VirtualDirectory>
   <VirtualDirectory Name="include"/>
   <VirtualDirectory Name="doc">

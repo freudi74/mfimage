@@ -12,6 +12,7 @@
 #include "stdafx.h"
 #include "ImageCoderJpeg2000.h"
 #include "ColorManager.h"
+#define OPJ_STATIC
 #include <openjpeg-2.1/openjpeg.h>
 #include <fstream>
 
@@ -45,16 +46,16 @@ static OPJ_SIZE_T streamReadFct( void * p_buffer, OPJ_SIZE_T p_nb_bytes, void * 
 	stream->read( reinterpret_cast<char*>(p_buffer), p_nb_bytes );
 	if ( stream->fail() && !stream->eof() )
 		return -1;
-	return stream->gcount();
+	return static_cast<OPJ_SIZE_T>(stream->gcount());
 }
 static OPJ_OFF_T streamSkipFct( OPJ_OFF_T p_nb_bytes, void * pUserStream )
 {
 	std::iostream* stream = reinterpret_cast<std::iostream*>(pUserStream);
-	int posBefore = stream->tellg();
+	std::streamoff posBefore = stream->tellg();
 	stream->seekg( p_nb_bytes, std::ios_base::cur );
 	if ( stream->fail() )
 		return -1;
-	int posAfter = stream->tellg();
+	std::streamoff posAfter = stream->tellg();
 	return posAfter - posBefore;
 }
 static OPJ_BOOL streamSeekFct( OPJ_OFF_T p_nb_bytes, void * pUserStream )
@@ -68,7 +69,7 @@ void ImageCoderJpeg2000::read(const std::string & filename )
 {
 	std::fstream file( filename.data(), std::ios::in|std::ios::binary );
 	file.seekg(0, std::ios_base::end );
-	size_t fileLength = file.tellg();
+	std::streamoff fileLength = file.tellg();
 	file.seekg(0);
 	if ( file.fail() )
  	{
@@ -229,7 +230,7 @@ void ImageCoderJpeg2000::read(const std::string & filename )
 		bool isCMYK = false;
 		bool isGray = false;
 		uint32_t bpc = 8;
-		bool hasAlpha = true;
+		bool hasAlpha = false;
 		size_t numComps = 0;
 		switch ( opj_image->color_space ) {
 		case OPJ_CLRSPC_SRGB:
@@ -286,7 +287,7 @@ void ImageCoderJpeg2000::read(const std::string & filename )
 			bpc = 16;
 
 		// todo: bpc, alpha, dpi!
-		PixelMode pm = PixelMode::create( isCMYK, isRGB, isGray, hasAlpha, bpc ); 
+		PixelMode pm = PixelMode::create( isCMYK, isRGB, isGray, false, hasAlpha, bpc ); 
 
 		image->create( width, height, pm,  72, 72 );
 		
@@ -295,6 +296,8 @@ void ImageCoderJpeg2000::read(const std::string & filename )
 		{
 			// embedded icc --- this doesn't work!!! Something is going on with openJPEG in this aspect, I assume
 			// it is already used to translate YCbCr to RGB. 
+			std::string iccContent(reinterpret_cast<char*>(opj_image->icc_profile_buf), opj_image->icc_profile_len);
+
 //			getIccProfile().assign(reinterpret_cast<char*>(opj_image->icc_profile_buf), opj_image->icc_profile_len);
 // 			props->embeddedIccProfile = true;
 		}
@@ -411,7 +414,20 @@ void ImageCoderJpeg2000::read(const std::string & filename )
 
 void ImageCoderJpeg2000::write(const std::string & filename )
 {
-	throw std::runtime_error("JPEG write not implemented");
+	throw std::runtime_error("JPEG2000 write not implemented");
+}
+
+void ImageCoderJpeg2000::write(std::ostream & stream)
+{
+	throw std::runtime_error("JPEG2000 write not implemented");
 }
 
 
+void ImageCoderJpeg2000::read(std::istream & stream)
+{
+	// @todo - make it right!
+
+	// hardcore for now --- write to temp file and read from that file.
+	std::string tempFileName = storeStreamToTempFile(stream);
+	read(tempFileName);
+}
