@@ -18,22 +18,29 @@ The original purpose of this library was to be the backend for image reading/wri
 - Using wide-spread standard and de-facto standard image format libraries like GIFLIB, libtiff-4, libjpeg-turbo, openJpeg, libpng.
 - Wide range support for subformats (for example CMYK JPEG, TIF Compressions, ...)
 
+# Internal image handling
+Color Model | channel depth | alpha
+------------|-----------|------
+RGB    | 8, 16, float | :white_check_mark:
+GRAY   | 8, 16, float | :white_check_mark:
+CMYK   | 8, 16, float | :white_check_mark:
+L*a*b* | float | :white_check_mark:
+
 # Supported Image File formats:
 File Format | Read | Write
 ------------|------|------
 TIFF | :white_check_mark: | :white_check_mark: 
 JPEG | :white_check_mark: | :clipboard:
 JP2  | :white_check_mark: | :clipboard:
-PNG  | :white_check_mark: | :white_check_mark: 
+PNG  | :white_check_mark: | :clipboard:
 BMP  | :white_check_mark: | :white_check_mark: 
 PCX  | :white_check_mark: | :white_medium_small_square:
 TGA  | :white_check_mark: | :white_medium_small_square:
 PSD  | :clipboard: | :white_medium_small_square:
-PDF  | :clipboard: | :white_medium_small_square:
-EPS  | :clipboard: | :white_medium_small_square:
+PDF  | :clipboard: | :clipboard:
 :clipboard: = planned
 
-## Sub-Formats fupported for reading
+## Sub-Formats supported for reading
 ###TIFF
 Color Model | BitDepth | AlphaChannel
 ------------|----------|-------------
@@ -44,12 +51,53 @@ CMYK | 8, 16 | :white_check_mark:
 CIEL*a*b* | :clipboard: | :clipboard:
 
 Compression: Uncompressed, RLE, FaxG3, FaxG4, LZW, JPEG, Deflate, Packbits, Thunderscan, LZMA2
-Organisation: Continguos, Planar, Stripes, Tiles (Planar+Stripes does not work yet)
+Organisation: Continguos, Planar / Stripes, Tiles
 Multipage: :white_check_mark:
+
+###JPEG
+Color Model | BitDepth | AlphaChannel
+------------|----------|-------------
+Todo: Describe
+
+###JPEG2000
+Color Model | BitDepth | AlphaChannel
+------------|----------|-------------
+Todo: Describe
+
+###PNG
+Color Model | BitDepth | AlphaChannel
+------------|----------|-------------
+Todo: Describe
+
+###BMP
+Color Model | BitDepth | AlphaChannel
+------------|----------|-------------
+Todo: Describe
+
+###PCX
+Color Model | BitDepth | AlphaChannel
+------------|----------|-------------
+Todo: Describe
+
+###TGA
+Color Model | BitDepth | AlphaChannel
+------------|----------|-------------
+Todo: Describe
+
+###TGA
+Color Model | BitDepth | AlphaChannel
+------------|----------|-------------
+Todo: Describe
+
+###PDF
+Embedded JPEG images in PDF pages.
+Not yet implemented.
+Todo: Describe deaitls
+
 
 
 # Language & Operating system:
-The library is internally written in C++(11), but also comes with an external C-interface to simplify usage from other languages and for Windows dlls.
+The library is internally written in C++(11/14), but also comes with an external C-interface to simplify usage from other languages and for Windows dlls.
 
 # License
-Dual-license: GPLv3, commercial license available.
+Dual-license: GPLv3, commercial license available on request.
