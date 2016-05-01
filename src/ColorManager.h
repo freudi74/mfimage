@@ -35,6 +35,7 @@ public:
 	cmsHPROFILE createRgbProfile(const cmsCIExyY* whitePoint, const cmsCIExyYTRIPLE* primaries, double gamma);
 	cmsHPROFILE createSrgbProfile();
 	cmsHPROFILE createGrayProfile(const cmsCIExyY* whitePoint, double gamma);
+	cmsHPROFILE createLabV4Profile(const cmsCIExyY* whitePoint);
 	cmsHPROFILE createNullProfile();
 	void closeProfile(cmsHPROFILE profile);
 
@@ -55,7 +56,7 @@ protected:
 class RAIIcmsHProfile {
 public:
 	RAIIcmsHProfile( cmsHPROFILE aProfile ) { hProfile = aProfile; }
-	~RAIIcmsHProfile() { /*cmsCloseProfile(hProfile); hProfile = nullptr;*/ }
+	~RAIIcmsHProfile() { cmsCloseProfile(hProfile); hProfile = nullptr; }
 // forbidd assigning something
 	RAIIcmsHProfile( const RAIIcmsHProfile& ) = delete;
 	RAIIcmsHProfile& operator=(const RAIIcmsHProfile&) = delete;

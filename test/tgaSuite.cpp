@@ -17,8 +17,8 @@ static size_t readWriteHashDpeg(const std::string & file) {
 }
 
 #ifndef SKIP_TGA_SUITE
-#undef CHECK_EQUAL
-#define CHECK_EQUAL(a,b) b
+//#undef CHECK_EQUAL
+//#define CHECK_EQUAL(a,b) b
 
 SUITE(TGASuite)
 {

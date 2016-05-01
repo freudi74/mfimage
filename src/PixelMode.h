@@ -46,6 +46,9 @@ public:
 		LABA32 = 0x3B
 	} PixelModeEnum;
 	
+	// note: in all float ranges, any value is between 0.0 and 1.0.
+	// exception: LAB: L=0.0-100.0; a,b = -something to +something; most often, between -128.0 and +127.0, but this is an "artificial" limitation based on 8 and 16 bit file encodings.
+	
 	PixelMode( PixelModeEnum val=RGB8 );
 	virtual ~PixelMode();
 	static PixelMode create(const std::string & colorModel, bool hasAlpha, uint32_t _bitsPerChannel);

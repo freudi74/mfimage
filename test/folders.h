@@ -34,6 +34,6 @@ size_t readWriteHash(const std::string & fileNameOnly, const std::string & inPat
 #define SKIP_PCX_SUITE
 #define SKIP_PNG_SUITE
 //#define SKIP_TGA_SUITE
-#define SKIP_TIFF_SUITE
+//#define SKIP_TIFF_SUITE
 
 

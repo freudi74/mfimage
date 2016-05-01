@@ -20,6 +20,41 @@ SUITE(TiffSuite)
 	///////////////////////
 	// marcos own stuff
 	///////////////////////
+	
+	TEST(TiffLab)
+	{
+		START_TEST();
+		std::list<std::string> testFileNames = { "ColorCheckerCalculator.tif" };
+		Image img; 
+		// prepare stuff for color conversion
+		Image imgRGB;
+		ColorManager cms;
+		RAIIcmsHProfile sRGB( cms.createSrgbProfile() );
+
+		for ( std::string & testFileName : testFileNames )
+		{
+			img.read( TEST_1_FILES + testFileName );
+			// convert the LAB image to 16 bit sRGB
+			PixelMode pm = PixelMode::create( "RGB", img.hasAlpha(), 16 );
+			imgRGB.create( img.getWidth(), img.getHeight(), pm, img.getResolutionX(), img.getResolutionY() );
+			RAIIcmsHProfile labProfile( cms.readProfileFromImage(&img) );
+			RAIIcmsHTransform transformation( cms.createTransform( labProfile, sRGB, INTENT_RELATIVE_COLORIMETRIC, img.getPixelMode().getLittleCmsFormat(), imgRGB.getPixelMode().getLittleCmsFormat(), cmsFLAGS_BLACKPOINTCOMPENSATION|cmsFLAGS_HIGHRESPRECALC ) );
+			for ( uint32_t iLine=0; iLine<img.getHeight(); iLine++ )
+			{
+				cmsDoTransform( transformation, img.getLine(iLine), imgRGB.getLine(iLine), img.getWidth() );
+			}
+			if ( img.hasAlpha() )
+			{
+				imgRGB.copyAlphaFrom( &img );
+			}
+//			img.write( TEST_1_OUT + testFileName+".tif", IE_TIFF ); // not implemented yet
+			imgRGB.write( TEST_1_OUT + testFileName+"_SRGB.tif", IE_TIFF );
+			
+		}
+		
+		END_TEST();
+	}
+
 
 	TEST(multipage)
 	{

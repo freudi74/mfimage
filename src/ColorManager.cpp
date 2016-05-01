@@ -119,8 +119,18 @@ cmsHPROFILE ColorManager::createNullProfile()
 		throw std::runtime_error("failed to create NULL profile" + formatError());
 	return hp;
 }
+cmsHPROFILE ColorManager::createLabV4Profile(const cmsCIExyY* whitePoint)
+{
+	cmsHPROFILE hp = cmsCreateLab4ProfileTHR(_ctx, whitePoint );
+	if (hp == nullptr)
+		throw std::runtime_error("failed to create LabV4 profile" + formatError());
+	return hp;
+}
+
 void ColorManager::closeProfile(cmsHPROFILE profile)
 {
+	if ( profile == nullptr )
+		return;
 	if ( ! cmsCloseProfile(profile) )
 		throw std::runtime_error("failed to close profile" + formatError());
 }

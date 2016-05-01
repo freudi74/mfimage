@@ -62,4 +62,7 @@ public:
 	bool     embedTimestamp           = true;       // W - write metainfo on when the file was written (TIFF, ?)
 	bool     embedOtherInfo           = true;       // W - write software version and such to file (TIFF, ?)
 	uint32_t defaultRenderingIntent   = BMP_RenderingIntent::REL_COLORIMETERIC;	// W - default rendering intent (currently only BMP)
+	bool     createColorProfileForImpliciteColorSpace = false; // W - if things like chromatic primaries are given, automatically create a color profile // NOT IMPLEMENTED
+	bool     createGrayProfileForImpliciteColorSpace  = false; // W - same as above for gray images // NOT IMPLEMENTED
+	bool     createLabProfile  = true; // W - same as above for L*a*b* images (littlecms v4 profile with given white point)
 } ImageCoderProperties;

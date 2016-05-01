@@ -38,7 +38,7 @@ ImageCoderPng::~ImageCoderPng()
 
 bool ImageCoderPng::canEncode()
 {
-	return false;	// @todo
+	return false;	
 }
 
 bool ImageCoderPng::canDecode()

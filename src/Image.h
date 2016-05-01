@@ -101,6 +101,8 @@ public:
 	typedef struct Pixel_LABA<float>    Pixel_LABA_32;
 #pragma pack(pop)
 
+	typedef struct WHITEPOINT_XYY { double x; double y; double Y; } WhitePointxyY;
+
 protected:	
 	static const std::string ColorModel_Gray;
 	static const std::string ColorModel_RGB;
@@ -337,6 +339,10 @@ public:
 	*/
 	void setIccProfile(const void* buffer, size_t len );
 
+	/** Get the white point for a LAB image
+	 */
+	const WhitePointxyY* getLabWhitePoint() const;
+	void setLabWhitePoint(double x, double y, double Y);
 
 private:
 	// this structure is similar (!!!) to the lplImage structure in openCV and Intel IPL for quick conversion... but certainly, not equal !
@@ -361,11 +367,12 @@ private:
 
 protected:
 	// The actual data of an image
-	PixelMode    pixelMode;	// how are the pixels internally stored ?
-	Header       header;
-	std::string  iccProfile;
-	double       dpiX;
-	double       dpiY;
+	PixelMode     pixelMode;	// how are the pixels internally stored ?
+	Header        header;
+	std::string   iccProfile;
+	double        dpiX;
+	double        dpiY;
+	WhitePointxyY whitePoint;	// only valid for lab images - default D50
 	std::unique_ptr<uint8_t[]> pixels; // carefull... lines have a stride! see: header.widthStep ! 
 	
 private:
@@ -375,6 +382,7 @@ private:
 
 protected:
 	bool imageReadCallback( size_t subImage ); // will be called if encoder read an image from the file and/or is done.
+	void createImpliciteProfile( const ImageCoderProperties * props ); 
 
 public:
 	/** Get a scan line.

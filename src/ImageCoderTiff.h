@@ -33,6 +33,7 @@ protected:
 	void readRGB(TIFF* tif, uint32_t width, uint32_t height, double dpiX, double dpiY, uint16_t samplesPerPixel, uint16_t bitsPerSample, int extraAlphaSample, bool separated, uint8_t* tiledImageBuffer);
 	void readCMYK(TIFF* tif, uint32_t width, uint32_t height, double dpiX, double dpiY, uint16_t samplesPerPixel, uint16_t bitsPerSample, int extraAlphaSample, bool separated, uint8_t* tiledImageBuffer);
 	void readRGBPalette(TIFF* tif, uint32_t width, uint32_t height, double dpiX, double dpiY, uint16_t samplesPerPixel, uint16_t bitsPerSample, int extraAlphaSample, bool separated, uint8_t* tiledImageBuffer);
+	void readLab(TIFF* tif, uint16_t photometric, uint32_t width, uint32_t height, double dpiX, double dpiY, uint16_t samplesPerPixel, uint16_t bitsPerSample, int extraAlphaSample, bool separated, uint8_t* tiledImageBuffer);
 	
 private:
 	uint32_t _tiles_planeSize;	// size (in bytes) of a single PLANE in the tiled buffer
@@ -42,5 +43,8 @@ private:
 	inline int readscanline(TIFF* tif, uint8_t* tiledImageBuffer, uint32_t scanlinesize, void* dest, uint32_t row, uint16_t sample=0 );
 	void readAndClose(TIFF* tif);
 	void writeAndClose(TIFF* tif);
-
+	inline float calcLabL( uint16_t photometric, void* sample, uint16_t bitsPerSample );
+	inline float calcLaba( uint16_t photometric, void* sample, uint16_t bitsPerSample );
+	inline float calcLabb( uint16_t photometric, void* sample, uint16_t bitsPerSample );
+	
 };

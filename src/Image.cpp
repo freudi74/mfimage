@@ -13,6 +13,8 @@
 #include "Image.h"
 #include <fstream>
 #include "ImageCoder.h"
+#include "lcms2.h"
+#include "ColorManager.h"
 
 // Statics
 const std::string Image::ColorModel_Gray{ "GRAY" };
@@ -387,6 +389,8 @@ void Image::read(const std::string & filename, size_t subImage/*=1*/, ImageCoder
 	
 	if ( subImageRead != subImage )
 		throw std::runtime_error("sub image (page) " + std::to_string(subImage) + "not found in file.");
+
+	createImpliciteProfile( props );
 }
 
 void Image::read(std::istream & stream, const std::string imageName/*=""*/, size_t subImage /*= 1*/, ImageCoderProperties* props /*= nullptr*/)
@@ -416,6 +420,8 @@ void Image::read(std::istream & stream, const std::string imageName/*=""*/, size
 
 	if (subImageRead != subImage)
 		throw std::runtime_error("sub image (page) " + std::to_string(subImage) + "not found in file.");
+		
+	createImpliciteProfile( props );
 
 }
 
@@ -1102,5 +1108,50 @@ uint64_t Image::calcHash(bool includeIccProfile /*= true*/) const
 	}
 
 	return hash;
+}
+
+const Image::WhitePointxyY* Image::getLabWhitePoint() const
+{
+	if ( ! isLab() )
+		return nullptr;
+	return &whitePoint;
+}
+void Image::setLabWhitePoint(double x, double y, double Y)
+{
+	whitePoint.x = x;
+	whitePoint.y = y;
+	whitePoint.Y = Y;
+}
+void Image::createImpliciteProfile(const ImageCoderProperties * props)
+{
+	if ( hasIccProfile() )
+		return;	// nothing to do
+		
+	if ( isGray() ) 
+	{
+		if ( props->createGrayProfileForImpliciteColorSpace ) 
+		{
+			throw std::runtime_error( "creating implicite gray profiles not yet implemented" );
+		}
+	}
+	else if ( isRGB() || isCMYK() )
+	{
+		if ( props->createColorProfileForImpliciteColorSpace )
+		{
+			throw std::runtime_error( "creating implicite RGB/CMYK color profiles not yet implemented" );
+		}
+	}
+	else if ( isLab() )
+	{
+		// wouldn't that be better suited inside the TIFF decoder ?
+		if ( props->createLabProfile )
+		{
+			cmsCIExyY labWhitePoint = { whitePoint.x, whitePoint.y, whitePoint.Y };
+			ColorManager cms;
+			RAIIcmsHProfile labProfile( cms.createLabV4Profile( &labWhitePoint ) );
+			cms.embeddProfile( this, labProfile );
+		}
+	}
+	
 }
 

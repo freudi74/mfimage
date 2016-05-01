@@ -105,7 +105,7 @@ void ImageCoderTiff::writeAndClose( TIFF* tif )
 			if (!TIFFSetField(tif, TIFFTAG_SOFTWARE, MFIMAGELIB_ID) )
 				throw std::runtime_error("failed to write tiff");
 		}
-
+		
 		if (!TIFFSetField(tif, TIFFTAG_IMAGEWIDTH, image->getWidth()))
 			throw std::runtime_error("failed to write tiff");
 
@@ -506,6 +506,16 @@ void ImageCoderTiff::readAndClose(TIFF* tif)
 				_TIFFfree( bufSingleTile );
 			}
 			
+			/////////////////////////
+			// White point
+			/////////////////////////
+			{
+				float* whitePoint;	// x,y value 
+				TIFFGetFieldDefaulted(tif, TIFFTAG_WHITEPOINT, &whitePoint );
+				props->whitepoint[0] = whitePoint[0];
+				props->whitepoint[1] = whitePoint[1];
+			}
+			
 			////////////////////////////////
 			// 
 			// Photometrix interpretation of the image
@@ -533,7 +543,7 @@ void ImageCoderTiff::readAndClose(TIFF* tif)
 				break;
 				
 			case PHOTOMETRIC_RGB:	/* RGB color model */
-				TIFFGetField(tif, TIFFTAG_INDEXED, &indexed); // note that we only support indexed RGB
+				TIFFGetField(tif, TIFFTAG_INDEXED, &indexed); 
 				if (indexed == 0)
 				{
 					if (bitsPerSample != 8 && bitsPerSample != 16)
@@ -569,19 +579,25 @@ void ImageCoderTiff::readAndClose(TIFF* tif)
 			case PHOTOMETRIC_YCBCR:
 				throw std::runtime_error("unsupported Photometric TAG (color encoding): PHOTOMETRIC_YCBCR");
 			case PHOTOMETRIC_CIELAB:	/* !1976 CIE L*a*b* */
-				throw std::runtime_error("unsupported Photometric TAG (color encoding): PHOTOMETRIC_CIELAB");
 				// Meaning: 8 bit: L [0..255], a [-128 - 127], b [-128 - 127]
 				// 16 bit: L [0..65535], a, b [-32768 - 32767]
 				// also see ICCLAB
 			case PHOTOMETRIC_ICCLAB:	/* ICC L*a*b* [Adobe TIFF Technote 4] */
-				throw std::runtime_error("unsupported Photometric TAG (color encoding): PHOTOMETRIC_ICCLAB (Adobe TIFF Technote 4)");
 				// Meaning: 8 bit: L [0..255], a, b [0 - 255]
 				// !!!! 16 bit: L [0..65280], a, b [0 - 65535]
 				// allowed bps = 8, 16				
 				// allowed number of channels: 1 (L only), 3 (Lab)
-				// Whitepoint: Default D50, might be other!
+				// Whitepoint: Default D50, might be other! --- note, that we already read the whitepoint (x,y) into props.whitepoint[].
+				if (bitsPerSample != 8 && bitsPerSample != 16)
+					throw std::runtime_error("unsupported BitsPerSample for CIELab image: " + std::to_string(bitsPerSample));
+				// read the white point ...	
+				readLab(tif, photometricInterpretation, width, height, dpiX, dpiY, samplesPerPixel, bitsPerSample, extraAlphaSample, isSeparated, tiledImageBuffer.get() );
+				// set the lab whitepoint
+				image->setLabWhitePoint( props->whitepoint[0], props->whitepoint[1], 1.0 );
+				break;
 				
 			case PHOTOMETRIC_ITULAB:	/* ITU L*a*b* */
+				// Described in RFC 2013 - used for ColorFax etc, requires other tags to interpret data.
 				throw std::runtime_error("unsupported Photometric TAG (color encoding): PHOTOMETRIC_ITULAB");
 			case PHOTOMETRIC_MASK:		/* $holdout mask */
 				throw std::runtime_error("unsupported Photometric TAG (color encoding): PHOTOMETRIC_MASK");
@@ -604,7 +620,6 @@ void ImageCoderTiff::readAndClose(TIFF* tif)
 				getIccProfile().assign(reinterpret_cast<char*>(iccBuffer), iccLen);
 			else
 				getIccProfile().clear();
-				
 
 			continueToRead = onSubImageRead(imageCount);	// we have read image #imageCount
         } while (continueToRead && TIFFReadDirectory(tif));
@@ -1017,4 +1032,180 @@ void ImageCoderTiff::readRGBPalette(TIFF* tif, uint32_t width, uint32_t height, 
 	}
 	_TIFFfree(buf);
 
+}
+
+// reads an Lab encoded image (8 or 16 bit) into an internal LAB float image.
+// TODO:
+// - float interpretation ?
+// - other than 8/16 bps ?
+// TEST to do:
+// - cont. 8
+// - cont. 16
+// - cont. 8 + alpha
+// - cont. 16 + alpha 
+// - plan. 8 
+// - plan. 16
+// - plan. 8 + alpha
+// - plan. 16 + alpha 
+// - CIELAB 8
+// - ICCLAB 8
+// - CIELAB 16
+// - ICCLAB 16
+// tested:
+
+void ImageCoderTiff::readLab(TIFF* tif, uint16_t photometric, uint32_t width, uint32_t height, double dpiX, double dpiY, uint16_t samplesPerPixel, uint16_t bitsPerSample, int extraAlphaSample, bool separated, uint8_t* tiledImageBuffer)
+{
+	bool hasAlpha = (samplesPerPixel > 3) && (extraAlphaSample != -1);
+
+	tdata_t buf;
+	tmsize_t scanlinesize = TIFFScanlineSize(tif);
+	buf = _TIFFmalloc(scanlinesize);
+	uint8_t * buf8 = reinterpret_cast<uint8_t*>(buf);
+	size_t bytesPerSample;
+	switch (bitsPerSample ) {
+	case 8:  bytesPerSample = 1; break;
+	case 16: bytesPerSample = 2; break;
+	}
+	image->create(width, height, hasAlpha ? PixelMode::LABA32 : PixelMode::LAB32, dpiX, dpiY);
+	
+	int samplesPerPixelIncludingAlpha = hasAlpha ? 4 : 3;	// if we have an alpha, we have 4 samples (ARGB) per pixel in our INTERNAL otherwise 3 (RGB)
+	int alphaSample = extraAlphaSample+3;
+	int planeIndizesInTiff[4]   = { 0, 1, 2, alphaSample };
+	
+
+	for (uint32_t row = 0; row < height; row++)
+	{
+		float* lineData = reinterpret_cast<float*>( image->getLine(row) ); // start of internal data row.
+		if ( separated )
+		{
+			for ( int plane=0; plane<samplesPerPixelIncludingAlpha; plane++ ) 
+			{
+				readscanline(tif, tiledImageBuffer, static_cast<uint32_t>(scanlinesize), buf, row, planeIndizesInTiff[plane]);
+				for (uint32_t col = 0; col < width; col++)
+				{
+					int sampleOffset = (samplesPerPixelIncludingAlpha * col) + plane;
+					switch ( plane ) 
+					{
+					case 0:	// L
+						lineData[sampleOffset] = calcLabL( photometric, buf8+(col*bytesPerSample), bitsPerSample ); 
+						break;
+					case 1:	// a
+						lineData[sampleOffset] = calcLaba( photometric, buf8+(col*bytesPerSample), bitsPerSample ); 
+						break;
+					case 2: //  b
+						lineData[sampleOffset] = calcLabb( photometric, buf8+(col*bytesPerSample), bitsPerSample ); 
+						break;
+					case 3: // Alpha
+						if ( bitsPerSample == 8 )
+							lineData[sampleOffset] = static_cast<float>(reinterpret_cast<uint8_t*>(buf)[col]) / 255.0f; 
+						else // ( bitsPerSample == 16)
+							lineData[sampleOffset] = static_cast<float>(reinterpret_cast<uint16_t*>(buf)[col]) / 65535.0f; 						
+						break;
+					}
+				}
+			}
+		}	
+		else	// contig.
+		{
+			readscanline(tif, tiledImageBuffer, static_cast<uint32_t>(scanlinesize), buf, row);
+			float* p = lineData;
+			for (uint32_t col = 0; col < width; col++)
+			{
+				int tOff = samplesPerPixel*col;
+				*p++ = calcLabL( photometric, buf8+((tOff+0)*bytesPerSample), bitsPerSample );
+				*p++ = calcLaba( photometric, buf8+((tOff+1)*bytesPerSample), bitsPerSample );
+				*p++ = calcLabb( photometric, buf8+((tOff+2)*bytesPerSample), bitsPerSample );
+				if ( hasAlpha ) 
+				{
+					if ( bitsPerSample == 8 )
+						*p++ = static_cast<float>(reinterpret_cast<uint8_t*>(buf)[tOff+alphaSample]) / 255.0f; 
+					else // ( bitsPerSample == 16)
+						*p++ = static_cast<float>(reinterpret_cast<uint16_t*>(buf)[tOff+alphaSample]) / 65535.0f; 						
+				}
+			}
+		} // end if sep / cont
+	} // end for each row
+	_TIFFfree(buf);
+}
+
+//
+// From "Adobe Photoshop® TIFF Technical Notes" (TIFF specification, supplement 1):
+//
+// For CIELab (PhotometricInterpretation = 8), the L* component is encoded in 8 bits as an unsigned integer
+// range [0,255], and encoded in 16 bits as an unsigned integer range [0,65535]. The a* and b* components
+// in 8 bits are signed integers range [-128,127], and in 16 bits are signed integers range [-32768,32767]. The
+// 8 bit chrominance values are encoded exactly equal to the 1976 CIE a* and b* values, while the 16 bit
+// values are encoded as 256 times the 1976 CIE a* and b* values.
+//
+// For ICCLab (PhotometricInterpretation = 9), the L* component is encoded in 8 bits as an unsigned integer
+// range [0,255], and encoded in 16 bits as an unsigned integer range [0,65280]. The a* and b* components in
+// 8 bits are unsigned integers range [0,255], and in 16 bits are unsigned integers range [0,65535]. The 8 bit
+// chrominance values are encoded exactly equal to the 1976 CIE a* and b* values plus 128, while the 16 bit
+// values are encoded equal to 256 times the 1976 CIE a* and b* values plus 32768 (this is also 256 times the
+// 8 bit encoding). PhotometricInterpretation 9 is designed to match the encoding used by the ICC profile
+// specification version 2 (taken from ICC document ICC.1:1998-09 “File Format for Color Profiles”).
+//
+
+// result: 0f - 100.0f
+float ImageCoderTiff::calcLabL(uint16_t photometric, void* sample, uint16_t bitsPerSample)
+{
+	switch ( photometric ) 
+	{
+	case PHOTOMETRIC_CIELAB:
+		if ( bitsPerSample == 8 ) 
+			return static_cast<float>(*reinterpret_cast<uint8_t*>(sample)) / 2.55f;
+		else // if ( bitsPerSample == 16 ) 
+			return static_cast<float>(*reinterpret_cast<uint16_t*>(sample)) / 655.35f;
+		break;
+	case PHOTOMETRIC_ICCLAB:
+		if ( bitsPerSample == 8 ) 
+			return static_cast<float>(*reinterpret_cast<uint8_t*>(sample)) / 2.55f;
+		else // if ( bitsPerSample == 16 ) 
+			return static_cast<float>(*reinterpret_cast<uint16_t*>(sample)) / 652.80f;
+		break;
+	}
+	// should never be reached:
+	throw std::runtime_error( "Internal error in ImageCoderTiff::calcLabL" );
+}
+// result: -128.0f - +127.9999999f
+float ImageCoderTiff::calcLaba(uint16_t photometric, void* sample, uint16_t bitsPerSample)
+{
+	switch ( photometric ) 
+	{
+	case PHOTOMETRIC_CIELAB:
+		if ( bitsPerSample == 8 ) 
+			return static_cast<float>(*reinterpret_cast<int8_t*>(sample));
+		else // if ( bitsPerSample == 16 ) 
+			return static_cast<float>(*reinterpret_cast<int16_t*>(sample)) / 256.0f;
+		break;
+	case PHOTOMETRIC_ICCLAB:
+		if ( bitsPerSample == 8 ) 
+			return (static_cast<float>(*reinterpret_cast<uint8_t*>(sample)) - 128.0f);
+		else // if ( bitsPerSample == 16 ) 
+			return (static_cast<float>(*reinterpret_cast<uint16_t*>(sample)) / 256.0f ) -128.0f;
+		break;
+	}
+	// should never be reached:
+	throw std::runtime_error( "Internal error in ImageCoderTiff::calcLaba" );
+}
+// result: -128.0f - +127.9999999f
+float ImageCoderTiff::calcLabb(uint16_t photometric, void* sample, uint16_t bitsPerSample)
+{
+	switch ( photometric ) 
+	{
+	case PHOTOMETRIC_CIELAB:
+		if ( bitsPerSample == 8 ) 
+			return static_cast<float>(*reinterpret_cast<int8_t*>(sample));
+		else // if ( bitsPerSample == 16 ) 
+			return static_cast<float>(*reinterpret_cast<int16_t*>(sample)) / 256.0f;
+		break;
+	case PHOTOMETRIC_ICCLAB:
+		if ( bitsPerSample == 8 ) 
+			return (static_cast<float>(*reinterpret_cast<uint8_t*>(sample)) - 128.0f);
+		else // if ( bitsPerSample == 16 ) 
+			return (static_cast<float>(*reinterpret_cast<uint16_t*>(sample)) / 256.0f ) -128.0f;
+		break;
+	}
+	// should never be reached:
+	throw std::runtime_error( "Internal error in ImageCoderTiff::calcLabb" );
 }
