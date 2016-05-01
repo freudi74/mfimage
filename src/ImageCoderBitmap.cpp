@@ -103,16 +103,16 @@ bool ImageCoderBitmap::canEncode( PixelMode pixelMode )
 {
 	switch ( pixelMode ) {
 	case PixelMode::GRAY8:   return true;
-	case PixelMode::GRAY16:  
-	case PixelMode::AGRAY8:  
-	case PixelMode::AGRAY16: break;
+	case PixelMode::GRAY16:  return false;
+	case PixelMode::AGRAY8:  return false;
+	case PixelMode::AGRAY16: return false;
 	case PixelMode::RGB8:    return true;
-	case PixelMode::RGB16:   
-	case PixelMode::ARGB8:   
-	case PixelMode::ARGB16:  
-	case PixelMode::CMYK8:   
-	case PixelMode::CMYK16:  
-	case PixelMode::CMYKA8:  
+	case PixelMode::RGB16:   return false;
+	case PixelMode::ARGB8:   return true; 
+	case PixelMode::ARGB16:  return false;
+	case PixelMode::CMYK8:   return false;
+	case PixelMode::CMYK16:  return false;
+	case PixelMode::CMYKA8:  return false;
 	case PixelMode::CMYKA16: break;
 	// no default to get compiler warning
 	}	
@@ -246,6 +246,8 @@ void ImageCoderBitmap::read( const std::string & filename )
 }
 
 typedef struct Pixel_BGRA_8   { uint8_t  b; uint8_t  g; uint8_t  r; uint8_t  a; } Pixel_BGRA_8;		// only for external usage. Internal always ARGB.
+typedef struct Pixel_BGAR_8   { uint8_t  b; uint8_t  g; uint8_t  a; uint8_t  r; } Pixel_BGAR_8;		// only for external usage. Internal always ARGB.
+
 //	typedef struct Pixel_BGRA_16  { uint16_t b; uint16_t g; uint16_t r; uint16_t a; } Pixel_BGRA_16;	// only for external usage. Internal always ARGB.
 typedef struct Pixel_BGR_8    { uint8_t  b; uint8_t  g; uint8_t  r;             } Pixel_BGR_8;		// only for external usage. Internal always RGB.
 //	typedef struct Pixel_BGR_16   { uint16_t b; uint16_t g; uint16_t r;             } Pixel_BGR_16;		// only for external usage. Internal always RGB.
@@ -609,6 +611,47 @@ void ImageCoderBitmap::write(std::ostream & stream)
 	bi.yPelsPerMeter = static_cast<int32_t>( image->getResolutionY() / 2.54 * 100.0 + 0.5 );
 	bi.clrUsed = 0;
 	bi.clrImportant = 0;
+	
+	if ( image->hasAlpha() || image->hasIccProfile() ) 
+	{
+		// write a BitmapinfoheaderV5
+		bi.size = 124;
+		bi.redMask = 0x00ff0000;
+		bi.greenMask = 0x0000ff00;
+		bi.blueMask = 0x000000ff;
+		bi.alphaMask = 0xff000000;
+		if ( image->hasAlpha() )
+			bi.compression = BI_BITFIELDS; // be able to define alpha
+		if ( image->hasIccProfile() )
+			bi.csType = BMPV5_PROFILE_EMBEDDED;
+		else
+			bi.csType = BMPV4_LCS_WINDOWS; // well... we can't assume a lot else, can we? Or would we better assume sRGB ?
+		
+		// values for LCS_CALIBRATED
+		bi.endpoint_ciexyzRed_x = 0;
+		bi.endpoint_ciexyzRed_y = 0;
+		bi.endpoint_ciexyzRed_z = 0;
+		bi.endpoint_ciexyzGreen_x = 0;
+		bi.endpoint_ciexyzGreen_y = 0;
+		bi.endpoint_ciexyzGreen_z = 0;
+		bi.endpoint_ciexyzBlue_x = 0;
+		bi.endpoint_ciexyzBlue_y = 0;
+		bi.endpoint_ciexyzBlue_z = 0;
+		bi.gammaRed = 0;	// 16.16 unsigned
+		bi.gammaGreen = 0;
+		bi.gammaBlue = 0;
+
+		// values for embedded ICC Profile
+		bi.intent = props->defaultRenderingIntent; // 1=saturation; 2=relColorimetric; 4=perceptual; 8=absColorimetric 
+		if ( bi.intent != 1 && bi.intent != 2 && bi.intent != 4 && bi.intent != 8 )
+			throw std::runtime_error( "Invalid defaultRenderingIntent property value for BMP Images" );  	
+		bi.profileDataOffset = 0; // the offset, in bytes, from the beginning of the BITMAPV5HEADER structure to the start of the profile data.
+		if ( image->hasIccProfile() )
+			bi.profileDataSize = getIccProfile().length(); // the size of the profile
+		else
+			bi.profileDataSize = 0;
+		bi.reserved = 0;
+	}
 
 	uint32_t stride;
 	switch (image->getPixelMode())
@@ -629,12 +672,25 @@ void ImageCoderBitmap::write(std::ostream & stream)
 		bi.bitCount  = 24; 
 		bi.sizeImage = stride * bi.height;
 		break;
+	case PixelMode::ARGB8:
+		// 32 bit ARGB
+		stride = bi.width * 4;
+		if ( stride % 4 ) stride += 4 - ( stride % 4 );
+		bi.bitCount  = 32; 
+		bi.sizeImage = stride * bi.height;
+		break;
+	
 	default:
 		throw std::runtime_error( "Image can't be saved as BMP!" ); // should have been caught by canEnconde
 	}
 
 	bf.offsetBytes = 14 + bi.size + bi.clrUsed * 4;	// file header, info header v1, color table
 	bf.size = bf.offsetBytes + bi.sizeImage;
+	if ( image->hasIccProfile() )
+	{
+		bi.profileDataOffset = bf.size - 14;	// offset to the icc profile from BMPINFOHEADER (that's why we have -14).
+		bf.size += bi.profileDataSize;
+	}
 	stream.write( reinterpret_cast<char*>( &bf ), 14 );
 	stream.write( reinterpret_cast<char*>( &bi ), bi.size );
 
@@ -664,26 +720,49 @@ void ImageCoderBitmap::write(std::ostream & stream)
 		break;
 	case PixelMode::RGB8:
 		// no color table
-	{
-		std::unique_ptr<char[]> outBuffer( new char[stride] );
-		std::memset( outBuffer.get(), 0, stride ); // to make sure padding bytes are 0 and avoid valgrind complaints
-		for ( int line = image->getHeight() - 1; line >= 0; line-- )
 		{
-			Image::Pixel_RGB_8* data = reinterpret_cast<Image::Pixel_RGB_8*>( image->getLine( line ) );
-			Pixel_BGR_8* dataOut = reinterpret_cast<Pixel_BGR_8*>( outBuffer.get() );
-			for ( size_t x = 0; x < image->getWidth(); x++ )
+			std::unique_ptr<char[]> outBuffer( new char[stride] );
+			std::memset( outBuffer.get(), 0, stride ); // to make sure padding bytes are 0 and avoid valgrind complaints
+			for ( int line = image->getHeight() - 1; line >= 0; line-- )
 			{
-				dataOut[x].r = data[x].r;
-				dataOut[x].g = data[x].g;
-				dataOut[x].b = data[x].b;
+				Image::Pixel_RGB_8* data = reinterpret_cast<Image::Pixel_RGB_8*>( image->getLine( line ) );
+				Pixel_BGR_8* dataOut = reinterpret_cast<Pixel_BGR_8*>( outBuffer.get() );
+				for ( size_t x = 0; x < image->getWidth(); x++ )
+				{
+					dataOut[x].r = data[x].r;
+					dataOut[x].g = data[x].g;
+					dataOut[x].b = data[x].b;
+				}
+				stream.write(reinterpret_cast<char*>(dataOut), stride);
 			}
-			stream.write(reinterpret_cast<char*>(dataOut), stride);
 		}
-	}
-	break;
+		break;
+	case PixelMode::ARGB8:
+		// no color table
+		{
+			std::unique_ptr<char[]> outBuffer( new char[stride] );
+			std::memset( outBuffer.get(), 0, stride ); // to make sure padding bytes are 0 and avoid valgrind complaints
+			for ( int line = image->getHeight() - 1; line >= 0; line-- )
+			{
+				Image::Pixel_ARGB_8* data = reinterpret_cast<Image::Pixel_ARGB_8*>( image->getLine( line ) );
+				Pixel_BGRA_8* dataOut = reinterpret_cast<Pixel_BGRA_8*>( outBuffer.get() );
+				for ( size_t x = 0; x < image->getWidth(); x++ )
+				{
+					dataOut[x].a = data[x].alpha;
+					dataOut[x].r = data[x].r;
+					dataOut[x].g = data[x].g;
+					dataOut[x].b = data[x].b;
+				}
+				stream.write(reinterpret_cast<char*>(dataOut), stride);
+			}
+		}
+		break;
 	default:
 		throw std::runtime_error( "Image can't be saved as BMP!" );  // should have been caught by canEnconde
 	}
+	
+	if ( image->hasIccProfile() )
+		stream.write(getIccProfile().data(), getIccProfile().length());
 
 }
 

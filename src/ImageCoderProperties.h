@@ -30,6 +30,19 @@ typedef enum TIFF_Compression {
 	LZMA=34925
 } TIFF_Compression;
 
+typedef enum BMP_RenderingIntent {
+	/** Saturation (LCS_GM_BUSINESS) */
+	SATURATION = 1,
+	/** Relative Colorimetric (LCS_GM_GRAPHICS) */
+	REL_COLORIMETERIC = 2,
+	/** Perceptual (LCS_GM_IMAGES) */
+	PERCEPTUAL = 4,
+	/** Absolute Colorimetric (LCS_GM_ABS_COLORIMETRIC) */
+	ABS_COLORIMETRIC = 8
+} BMP_RenderingIntent;
+
+
+
 typedef struct ImageCoderProperties {
 public:
 	bool     embeddedIccProfile    = false;  // R - true if file contained embedded ICC profile
@@ -44,8 +57,9 @@ public:
 	// flags on how to read/write the file
 	bool     applyHalftoneHintsOnRead = true;       // W - obey halft tone hints during read (TIFF)
 	bool     writeSeparatedPlanes     = false;      // W - Write file in planar order ? Tiff only
-	uint32_t compression              = TIFF_Compression::NONE;          // W - compression type, encoder specific
+	uint32_t compression              = TIFF_Compression::NONE;          // W - compression type, encoder specific (currently only tiff)
 	double   quality                  = 0.9;        // W - quality for lossy compressions (Jpeg, Jpeg2000)
 	bool     embedTimestamp           = true;       // W - write metainfo on when the file was written (TIFF, ?)
 	bool     embedOtherInfo           = true;       // W - write software version and such to file (TIFF, ?)
+	uint32_t defaultRenderingIntent   = BMP_RenderingIntent::REL_COLORIMETERIC;	// W - default rendering intent (currently only BMP)
 } ImageCoderProperties;

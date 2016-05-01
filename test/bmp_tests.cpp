@@ -51,6 +51,7 @@ SUITE(BmpSuite)
 			std::cout << "file: " << testFileName << std::endl;
 			img.read( TEST_FILES + testFileName, 1 );
 			img.write( TEST_OUT + testFileName + ".tif", IE_TIFF );
+			img.write( TEST_OUT + testFileName + ".bmp", IE_BMP );
 		}
 		END_TEST();			
 	}	
@@ -87,6 +88,7 @@ SUITE(BmpSuite)
 			std::cout << "file: " << testFileName << std::endl;
 			img.read( TEST_FILES + testFileName, 1 );
 			img.write( TEST_OUT + testFileName + ".tif", IE_TIFF );
+			img.write( TEST_OUT + testFileName + ".bmp", IE_BMP );
 		}			
 		END_TEST();
 	}
