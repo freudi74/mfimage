@@ -24,7 +24,7 @@ Color Model | channel depth | alpha
 RGB    | 8, 16, float | :white_check_mark:
 GRAY   | 8, 16, float | :white_check_mark:
 CMYK   | 8, 16, float | :white_check_mark:
-L*a*b* | float | :white_check_mark:
+L\*a\*b\* | float | :white_check_mark:
 
 # Supported Image File formats:
 File Format | Read | Write
