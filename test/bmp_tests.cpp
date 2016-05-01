@@ -43,7 +43,7 @@ SUITE(BmpSuite)
 	{
 		START_TEST();
 		std::list<std::string> testFileNames = { 
-//			"trans.bmp" // 32 bit BI_BITFIELD with alpha mask
+			"rgba32.bmp"
 		};
 		Image img; 
 		for ( std::string & testFileName : testFileNames )
@@ -62,6 +62,24 @@ SUITE(BmpSuite)
 		std::list<std::string> testFileNames = { 
 //			"testcompress4.bmp",
 			"testcompress8.bmp"
+		};
+		Image img; 
+		for ( std::string & testFileName : testFileNames )
+		{
+			std::cout << "file: " << testFileName << std::endl;
+			img.read( TEST_FILES + testFileName, 1 );
+			img.write( TEST_OUT + testFileName + ".tif", IE_TIFF );
+		}			
+		END_TEST();
+	}
+	
+	TEST(bmp_embedded_profile) 
+	{
+		START_TEST();
+		createFolder( TEST_OUT );
+		std::list<std::string> testFileNames = { 
+//			"testcompress4.bmp",
+			"rgb24prof.bmp"
 		};
 		Image img; 
 		for ( std::string & testFileName : testFileNames )

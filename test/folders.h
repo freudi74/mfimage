@@ -27,7 +27,7 @@ std::cout << "# DONE: " << m_details.testName << " - duration: " << std::fixed <
 
 size_t readWriteHash(const std::string & fileNameOnly, const std::string & inPath, const std::string & outPath, bool writeOutFile, bool printResults=true);
 
-#define SKIP_BMP_SUITE
+//#define SKIP_BMP_SUITE
 #define SKIP_GIF_SUITE
 #define SKIP_JPEG_SUITE
 #define SKIP_JPEG2000_SUITE

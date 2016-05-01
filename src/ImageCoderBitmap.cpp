@@ -74,6 +74,13 @@ typedef struct BitmapInfoHeaderV5 {
 } BitmapInfoHeaderV5;
 #pragma pack(pop)
 
+// Values in csType
+#define BMPV4_LCS_CALIBRATED_RGB 0
+#define BMPV4_LCS_sRGB 0x73524742
+#define BMPV4_LCS_WINDOWS 0x57696E20
+#define BMPV5_PROFILE_LINKED 0x4c494e4b
+#define BMPV5_PROFILE_EMBEDDED 0x4d424544 
+
 ImageCoderBitmap::ImageCoderBitmap( Image* img ) : ImageCoder( IE_BMP, img )
 {
 }
@@ -410,7 +417,7 @@ void ImageCoderBitmap::read(std::istream & stream)
 		bi.alphaMask = 0;
 		break;
 	case BI_BITFIELDS:
-		if (bi.bitCount != 16 || bi.bitCount != 32 )
+		if (bi.bitCount != 16 && bi.bitCount != 32 )
 			throw std::runtime_error("failed to read BMP file - bogus BitmapInfoHeader - invalid compression Mask / bitCount");
 		if (bitmapInfoHeaderVersion < 2) {
 			// - in case of V1 header, this comes AFTER the header for BI_BITFIELDS. (R;G;B)
@@ -549,6 +556,24 @@ void ImageCoderBitmap::read(std::istream & stream)
 				}
 			}
 		}
+	}
+	
+	// Load embedded ICC Profile - note that we can't handle "linked" profiles and we DON'T handle "CALIBRATED COLORSPACE" (for now)
+	if ( bitmapInfoHeaderVersion == 5 && bi.csType == BMPV5_PROFILE_EMBEDDED && bi.profileDataOffset && bi.profileDataSize ) 
+	{
+		stream.seekg( sizeof(BitmapFileHeader) + bi.profileDataOffset );
+		if ( stream.fail() )
+			throw std::runtime_error("failed to read embedded ICC profile - error in header ?");
+			
+		std::unique_ptr<char[]> iccBuffer( new char[bi.profileDataSize] );
+		if ( !iccBuffer )
+			throw std::runtime_error("failed to create Buffer for embedded icc profile (out of memory?)" );
+
+		stream.read( iccBuffer.get(), bi.profileDataSize );
+		if ( stream.fail() )
+			throw std::runtime_error("failed to read embedded ICC profile - premature end of file");
+			
+		getIccProfile().assign( iccBuffer.get(), bi.profileDataSize );
 	}
 
 	onSubImageRead(1);	// we have read image #1
