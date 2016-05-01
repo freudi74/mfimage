@@ -3,6 +3,7 @@
 /src/Release
 /src/mfimage.txt
 /src/mfimage.mk
+/out
 /test/out
 /test/Debug
 /test/Release

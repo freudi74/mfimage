@@ -100,8 +100,20 @@
         <PostConnectCommands/>
         <StartupCommands/>
       </Debugger>
-      <PreBuild/>
-      <PostBuild/>
+      <PreBuild>
+        <Command Enabled="yes">rm -fr $(WorkspacePath)/../../out</Command>
+        <Command Enabled="yes">mkdir $(WorkspacePath)/../../out</Command>
+      </PreBuild>
+      <PostBuild>
+        <Command Enabled="yes">rm -rf $(WorkspacePath)/../../out/lib</Command>
+        <Command Enabled="yes">mkdir $(WorkspacePath)/../../out/lib</Command>
+        <Command Enabled="yes">cp $(IntermediateDirectory)/lib$(ProjectName).a $(WorkspacePath)/../../out/lib</Command>
+        <Command Enabled="yes">rm -rf $(WorkspacePath)/../../out/include</Command>
+        <Command Enabled="yes">mkdir $(WorkspacePath)/../../out/include</Command>
+        <Command Enabled="yes">cp $(ProjectPath)/Image.h $(WorkspacePath)/../../out/include</Command>
+        <Command Enabled="yes">cp $(ProjectPath)/ImageCoderProperties.h $(WorkspacePath)/../../out/include</Command>
+        <Command Enabled="yes">cp $(ProjectPath)/PixelMode.h $(WorkspacePath)/../../out/include</Command>
+      </PostBuild>
       <CustomBuild Enabled="no">
         <RebuildCommand/>
         <CleanCommand/>
