@@ -261,7 +261,6 @@ void Image::copyAlphaFrom(const Image* other)
 		throw std::runtime_error( "copyAlphaFrom failed, src image has no Alpha Channel" );
 	if (!this->hasAlpha()  )
 		throw std::runtime_error( "copyAlphaFrom failed, destination image has no Alpha Channel" );
-	size_t bytesPerSample = header.depth / 8;
 	for (size_t iLine = 0; iLine < header.height; iLine++)
 	{
 		for (size_t iRow = 0; iRow < header.width; iRow++)
@@ -1072,15 +1071,15 @@ uint64_t Image::calcHash(bool includeIccProfile /*= true*/) const
 	fnv_1a(hash, &header.depth, sizeof(header.depth));
 	fnv_1a(hash, header.colorModel);
 	fnv_1a(hash, header.channelSeq);
-    fnv_1a(hash, &header.dataOrder, sizeof(header.dataOrder));
+	fnv_1a(hash, &header.dataOrder, sizeof(header.dataOrder));
 	fnv_1a(hash, &header.origin, sizeof(header.origin));
-	fnv_1a(hash, &header.pixelAlign, sizeof(header.pixelAlign));
-	fnv_1a(hash, &header.lineAlign, sizeof(header.lineAlign));
+//	fnv_1a(hash, &header.pixelAlign, sizeof(header.pixelAlign));
+//	fnv_1a(hash, &header.lineAlign, sizeof(header.lineAlign));
 	fnv_1a(hash, &header.bytesPerPixel, sizeof(header.bytesPerPixel));
 	fnv_1a(hash, &header.width, sizeof(header.width));
 	fnv_1a(hash, &header.height, sizeof(header.height));
-	fnv_1a(hash, &header.widthStep, sizeof(header.widthStep));
-	fnv_1a(hash, &header.imageSize, sizeof(header.imageSize));
+//	fnv_1a(hash, &header.widthStep, sizeof(header.widthStep));
+//	fnv_1a(hash, &header.imageSize, sizeof(header.imageSize));
 	int pm = pixelMode;
 	fnv_1a(hash, &pm, sizeof(pm));
 	fnv_1a(hash, &dpiX, sizeof(dpiX));

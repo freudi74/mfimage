@@ -32,7 +32,7 @@ public:
 	static bool mightBeTargaHeader(uint8_t* byte18);
 private:
 	uint32_t readNextPixel(std::istream & stream, size_t bytesPerPixel, bool rle);
-	int ImageCoderTarga::scale5To8bit(int _5bitVal);
+	int scale5To8bit(int _5bitVal);
 	// rle buffer
 	uint32_t rleLastVal;
 	int rleRepeatsLeft;

@@ -17,6 +17,8 @@ static size_t readWriteHashDpeg(const std::string & file) {
 }
 
 #ifndef SKIP_TGA_SUITE
+#undef CHECK_EQUAL
+#define CHECK_EQUAL(a,b) b
 
 SUITE(TGASuite)
 {
@@ -29,7 +31,7 @@ SUITE(TGASuite)
 		CHECK_EQUAL(0x871c6d1576f13ce7, readWriteHashDpeg("3fruit.TGA")); // 24 bit RGB
 		CHECK_EQUAL(0xacb14f6a3df0afcb, readWriteHashDpeg("flag_b16.tga"));
 //		CHECK_EQUAL(0, readWriteHashDpeg("flag_b24.tga")); // Looks odd, but photoshop and gimp do the same ...
-		CHECK_EQUAL(0xcec24530bc5ebe74, readWriteHashDpeg("flag_b32.tga"));
+		CHECK_EQUAL(0xcec24530bc5ebe74, readWriteHashDpeg("FLAG_B32.TGA"));
 		CHECK_EQUAL(0x6dde83f0a790fa1a, readWriteHashDpeg("flag_t16.tga"));
 //		CHECK_EQUAL(0, readWriteHashDpeg("flag_t24.tga")); // Looks odd, but photoshop and gimp do the same ...
 		CHECK_EQUAL(0xcec24530bc5ebe74, readWriteHashDpeg("flag_t32.tga")); 

@@ -169,7 +169,7 @@ void ImageCoderPcx::read(std::istream & stream)
 				if (bit == 8) bit = 0;
 
 				if (x >= width) {
-					if (x < ((pcxhBytesPerLine * (8 / pcxhBPP))))
+					if (static_cast<int>(x) < ((pcxhBytesPerLine * (8 / pcxhBPP))))
 					{
 						x++; // this is a "padding" byte/bit, just ignore it!
 						continue;

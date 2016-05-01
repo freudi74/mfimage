@@ -41,6 +41,7 @@
     <File Name="jpeg_tests.cpp"/>
     <File Name="bmp_tests.cpp"/>
     <File Name="jpeg2000_tests.cpp"/>
+    <File Name="tgaSuite.cpp"/>
   </VirtualDirectory>
   <Dependencies Name="Debug">
     <Project Name="mf-image"/>
@@ -65,12 +66,12 @@
       </Compiler>
       <Linker Options="" Required="yes">
         <LibraryPath Value="../src/Debug/"/>
-        <LibraryPath Value="../temp/"/>
         <Library Value="libUnitTest++.a"/>
         <Library Value="libmfimage"/>
-        <Library Value="libgif_5"/>
+        <Library Value="libgif"/>
         <Library Value="libjpeg"/>
         <Library Value="libtiff"/>
+        <Library Value="libtiffxx"/>
         <Library Value="libpng"/>
         <Library Value="lcms2"/>
         <Library Value="libopenjp2"/>

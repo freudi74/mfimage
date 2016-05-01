@@ -11,11 +11,7 @@
 
 #include "stdafx.h"
 #include "ImageCoderGif.h"
-#ifdef _WIN32
-#  include <gif_lib.h>
-#else
-#  include "../temp/gif_lib5.h"
-#endif
+#include <gif_lib.h>
 /*static*/ std::mutex ImageCoderGif::s_giflibMutex;
 
 ImageCoderGif::ImageCoderGif(Image* img) : ImageCoder(IE_GIF, img)

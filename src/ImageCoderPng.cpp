@@ -175,7 +175,7 @@ void ImageCoderPng::read(std::istream & stream)
 
 		if (interlaceMethod == PNG_INTERLACE_ADAM7)
 		{
-			int number_passes = png_set_interlace_handling(png);
+			png_set_interlace_handling(png);
 		}
 
 		// set up the image...
@@ -268,7 +268,7 @@ void ImageCoderPng::read(std::istream & stream)
 		{
 			// read icc profile if present
 			png_charp name;
-			png_bytep profile;
+			png_charp profile;
 			png_uint_32 profileLen;
 			int compressionType;
 			res = png_get_iCCP(png, pngInfo, &name, &compressionType, &profile, &profileLen);

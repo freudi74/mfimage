@@ -68,9 +68,9 @@ static OPJ_BOOL streamSeekFct( OPJ_OFF_T p_nb_bytes, void * pUserStream )
 void ImageCoderJpeg2000::read(const std::string & filename )
 {
 	std::fstream file( filename.data(), std::ios::in|std::ios::binary );
-	file.seekg(0, std::ios_base::end );
-	std::streamoff fileLength = file.tellg();
-	file.seekg(0);
+//	file.seekg(0, std::ios_base::end );
+//	std::streamoff fileLength = file.tellg();
+//	file.seekg(0);
 	if ( file.fail() )
  	{
 		throw std::runtime_error( "Failed to open file: " + filename );

@@ -3,9 +3,9 @@
 #include <iostream>
 #include <chrono>
 
-#define TESTDATA "E:\\svn\\modularComponents\\3rd-party\\libmfimage\\trunk\\mfimage\\testdata"
-#define TESTOUT  "E:\\svn\\modularComponents\\3rd-party\\libmfimage\\trunk\\mfimage\\test-out"
-#define SEPARATOR "\\"
+#define TESTDATA "/home/marco/dev/build/mfimage/testdata"
+#define TESTOUT  "/home/marco/dev/build/mfimage/test-out"
+#define SEPARATOR "/"
 
 void cleanOut();
 void createFolder( const char* folder );

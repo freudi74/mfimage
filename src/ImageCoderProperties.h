@@ -2,25 +2,6 @@
 #include <cstdint>
 #include <array>
 #include <vector>
-typedef struct ImageCoderProperties {
-public:
-	bool     embeddedIccProfile    = false;  // R - true if file contained embedded ICC profile
-	bool     colorSpaceIsSRGB      = false;	 // RW - true if color space is/shall be marked as SRGB 
-	bool     hasColorDescription   = false;  // R - true if file contained gamma, whitepoint or chroma description
-	double   gamma                 = 0.0;    // RW - file gamma
-	std::array<double,2>   whitepoint;    // R - whitepoint
-	std::vector<double>    chromaticPrimaries;    // R - chromatic primaries - typically 6
-	std::array<double,2>   offsetInches;    // R - position offset in inches
-	std::array<int32_t,2>  offsetPixels;    // R - position offset in píxels
-	
-	// flags on how to read/write the file
-	bool     applyHalftoneHintsOnRead = true;       // W - obey halft tone hints during read (TIFF)
-	bool     writeSeparatedPlanes     = false;      // W - Write file in planar order ? Tiff only
-	uint32_t compression              = 0;          // W - compression type, encoder specific
-	double   quality                  = 0.9;        // W - quality for lossy compressions (Jpeg, Jpeg2000)
-	bool     embedTimestamp           = true;       // W - write metainfo on when the file was written (TIFF, ?)
-	bool     embedOtherInfo           = true;       // W - write software version and such to file (TIFF, ?)
-} ImageCoderProperties;
 
 typedef enum TIFF_Compression {
 	/** No compression */
@@ -47,4 +28,24 @@ typedef enum TIFF_Compression {
 	THUNDERSCAN_RLE=32809,
 	/** LZMA2 */
 	LZMA=34925
-};
+} TIFF_Compression;
+
+typedef struct ImageCoderProperties {
+public:
+	bool     embeddedIccProfile    = false;  // R - true if file contained embedded ICC profile
+	bool     colorSpaceIsSRGB      = false;	 // RW - true if color space is/shall be marked as SRGB 
+	bool     hasColorDescription   = false;  // R - true if file contained gamma, whitepoint or chroma description
+	double   gamma                 = 0.0;    // RW - file gamma
+	std::array<double,2>   whitepoint;    // R - whitepoint
+	std::vector<double>    chromaticPrimaries;    // R - chromatic primaries - typically 6
+	std::array<double,2>   offsetInches;    // R - position offset in inches
+	std::array<int32_t,2>  offsetPixels;    // R - position offset in píxels
+	
+	// flags on how to read/write the file
+	bool     applyHalftoneHintsOnRead = true;       // W - obey halft tone hints during read (TIFF)
+	bool     writeSeparatedPlanes     = false;      // W - Write file in planar order ? Tiff only
+	uint32_t compression              = TIFF_Compression::NONE;          // W - compression type, encoder specific
+	double   quality                  = 0.9;        // W - quality for lossy compressions (Jpeg, Jpeg2000)
+	bool     embedTimestamp           = true;       // W - write metainfo on when the file was written (TIFF, ?)
+	bool     embedOtherInfo           = true;       // W - write software version and such to file (TIFF, ?)
+} ImageCoderProperties;

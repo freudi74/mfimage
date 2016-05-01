@@ -37,14 +37,30 @@ typedef enum ImageEncoding {
 	IE_TGA,
 
 	/** USER SPECIFIC CODECS */
+#ifdef CREATE_USER_CODER_1
 	IE_USER_1 = 1001,
-	IE_USER_2,
-	IE_USER_3,
-	IE_USER_4,
-	IE_USER_5,
-	IE_USER_6,
-	IE_USER_7,
-	IE_USER_8,
+#endif
+#ifdef CREATE_USER_CODER_2
+	IE_USER_2 = 1002,
+#endif
+#ifdef CREATE_USER_CODER_3
+	IE_USER_3 = 1003,
+#endif
+#ifdef CREATE_USER_CODER_4
+	IE_USER_4 = 1004,
+#endif
+#ifdef CREATE_USER_CODER_5
+	IE_USER_5 = 1005,
+#endif
+#ifdef CREATE_USER_CODER_6
+	IE_USER_6 = 1006,
+#endif
+#ifdef CREATE_USER_CODER_7
+	IE_USER_7 = 1007,
+#endif
+#ifdef CREATE_USER_CODER_8
+	IE_USER_8 = 1008,
+#endif
 
 } ImageEncoding;
 
