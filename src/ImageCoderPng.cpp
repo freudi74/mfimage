@@ -268,7 +268,12 @@ void ImageCoderPng::read(std::istream & stream)
 		{
 			// read icc profile if present
 			png_charp name;
+      // Confusion in libpng. Up to 1.4, "profile" was png_charp, since 1.5 it's png_bytep
+#if ( PNG_LIBPNG_VER_MAJOR>1 || (PNG_LIBPNG_VER_MAJOR==1 && PNG_LIBPNG_VER_MINOR>=5) )
+			png_bytep profile;
+#else
 			png_charp profile;
+#endif
 			png_uint_32 profileLen;
 			int compressionType;
 			res = png_get_iCCP(png, pngInfo, &name, &compressionType, &profile, &profileLen);

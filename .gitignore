@@ -4,6 +4,7 @@
 /src/mfimage.txt
 /src/mfimage.mk
 /out
+/doc/api
 /test/out
 /test/Debug
 /test/Release
@@ -13,3 +14,7 @@
 /projects/codelite/.build-debug/mfimage
 /projects/codelite/.build-release/mfimage
 /projects/codelite/Makefile
+/projects/vs/x64
+/projects/vs/Win32
+/projects/vs/*.sdf
+/projects/vs/*.suo

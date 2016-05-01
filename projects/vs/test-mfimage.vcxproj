@@ -18,11 +18,17 @@
       <Platform>x64</Platform>
     </ProjectConfiguration>
   </ItemGroup>
+  <PropertyGroup Label="UserMacros">
+    <SrcDir>$(SolutionDir)..\..\test\</SrcDir>
+    <DepDir>$(SolutionDir)..\..\..\dep\</DepDir>
+    <!-- outdir of main project (the one to test) -->
+    <MainOutDir>$(SolutionDir)..\..\src\$(Configuration)\$(Platform)\</MainOutDir>
+  </PropertyGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{88CA5541-C402-4E7B-A8B4-01D38A4B14EB}</ProjectGuid>
     <RootNamespace>testmfimage</RootNamespace>
     <IntDir>$(Platform)\$(Configuration)\</IntDir>
-    <OutDir>$(SolutionDir)..\..\$(Platform)\$(Configuration)\</OutDir>
+    <OutDir>$(SrcDir)$(Configuration)\$(Platform)\</OutDir>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
@@ -66,19 +72,17 @@
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
-  <PropertyGroup Label="UserMacros" />
-  <PropertyGroup />
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>..\..\..\..\dep\lcms2\include;..\..\..\..\dep\unittest++\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(DepDir)lcms2\include;$(DepDir)unittest++\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>..\..\..\..\dep\zlib\lib;..\..\..\..\dep\openjp2\lib;..\..\..\..\dep\libtiff\lib;..\..\..\..\dep\libpng\lib;..\..\..\..\dep\liblzma\lib;..\..\..\..\dep\libjpeg-turbo\lib;..\..\..\..\dep\lcms2\lib;..\..\..\..\dep\giflib\lib;..\..\..\..\dep\unittest++\lib;.\x64\Debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(DepDir)zlib\lib;$(DepDir)openjp2\lib;$(DepDir)libtiff\lib;$(DepDir)libpng\lib;$(DepDir)liblzma\lib;$(DepDir)libjpeg-turbo\lib;$(DepDir)lcms2\lib;$(DepDir)giflib\lib;$(DepDir)unittest++\lib;$(MainOutDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>UnitTest++D.lib;mfimage.lib;giflib-static-mtdll-debug.lib;lcms2_staticD.lib;turbojpeg-staticD.lib;liblzmaD.lib;libpng16_staticD.lib;tiffD.lib;tiffxxD.lib;openjp2D.lib;zlibstaticD.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
@@ -87,12 +91,12 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>..\..\..\..\dep\lcms2\include;..\..\..\..\dep\unittest++\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(DepDir)lcms2\include;$(DepDir)unittest++\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>..\..\..\..\dep\zlib\lib;..\..\..\..\dep\openjp2\lib;..\..\..\..\dep\libtiff\lib;..\..\..\..\dep\libpng\lib;..\..\..\..\dep\liblzma\lib;..\..\..\..\dep\libjpeg-turbo\lib;..\..\..\..\dep\lcms2\lib;..\..\..\..\dep\giflib\lib;..\..\..\..\dep\unittest++\lib;.\x64\Debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(DepDir)zlib\lib;$(DepDir)openjp2\lib;$(DepDir)libtiff\lib;$(DepDir)libpng\lib;$(DepDir)liblzma\lib;$(DepDir)libjpeg-turbo\lib;$(DepDir)lcms2\lib;$(DepDir)giflib\lib;$(DepDir)unittest++\lib;$(MainOutDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>UnitTest++D.lib;mfimage.lib;giflib-static-mtdll-debug.lib;lcms2_staticD.lib;turbojpeg-staticD.lib;liblzmaD.lib;libpng16_staticD.lib;tiffD.lib;tiffxxD.lib;openjp2D.lib;zlibstaticD.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
@@ -103,13 +107,13 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>..\..\..\..\dep\lcms2\include;..\..\..\..\dep\unittest++\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(DepDir)lcms2\include;$(DepDir)unittest++\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalLibraryDirectories>..\..\..\..\dep\zlib\lib;..\..\..\..\dep\openjp2\lib;..\..\..\..\dep\libtiff\lib;..\..\..\..\dep\libpng\lib;..\..\..\..\dep\liblzma\lib;..\..\..\..\dep\libjpeg-turbo\lib;..\..\..\..\dep\lcms2\lib;..\..\..\..\dep\giflib\lib;..\..\..\..\dep\unittest++\lib;.\x64\Release;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(DepDir)zlib\lib;$(DepDir)openjp2\lib;$(DepDir)libtiff\lib;$(DepDir)libpng\lib;$(DepDir)liblzma\lib;$(DepDir)libjpeg-turbo\lib;$(DepDir)lcms2\lib;$(DepDir)giflib\lib;$(DepDir)unittest++\lib;$(MainOutDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>UnitTest++.lib;mfimage.lib;giflib-static-mtdll.lib;lcms2_static.lib;turbojpeg-static.lib;liblzma.lib;libpng16_static.lib;tiff.lib;tiffxx.lib;openjp2.lib;zlibstatic.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
@@ -120,31 +124,31 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>..\..\..\..\dep\lcms2\include;..\..\..\..\dep\unittest++\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(DepDir)lcms2\include;$(DepDir)unittest++\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalLibraryDirectories>..\..\..\..\dep\zlib\lib;..\..\..\..\dep\openjp2\lib;..\..\..\..\dep\libtiff\lib;..\..\..\..\dep\libpng\lib;..\..\..\..\dep\liblzma\lib;..\..\..\..\dep\libjpeg-turbo\lib;..\..\..\..\dep\lcms2\lib;..\..\..\..\dep\giflib\lib;..\..\..\..\dep\unittest++\lib;.\x64\Release;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(DepDir)zlib\lib;$(DepDir)openjp2\lib;$(DepDir)libtiff\lib;$(DepDir)libpng\lib;$(DepDir)liblzma\lib;$(DepDir)libjpeg-turbo\lib;$(DepDir)lcms2\lib;$(DepDir)giflib\lib;$(DepDir)unittest++\lib;$(MainOutDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>UnitTest++.lib;mfimage.lib;giflib-static-mtdll.lib;lcms2_static.lib;turbojpeg-static.lib;liblzma.lib;libpng16_static.lib;tiff.lib;tiffxx.lib;openjp2.lib;zlibstatic.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\..\test\bmp_tests.cpp" />
-    <ClCompile Include="..\..\..\test\folders.cpp" />
-    <ClCompile Include="..\..\..\test\gif_tests.cpp" />
-    <ClCompile Include="..\..\..\test\jpeg2000_tests.cpp" />
-    <ClCompile Include="..\..\..\test\jpeg_tests.cpp" />
-    <ClCompile Include="..\..\..\test\main.cpp" />
-    <ClCompile Include="..\..\..\test\pcx_tests.cpp" />
-    <ClCompile Include="..\..\..\test\png_tests.cpp" />
-    <ClCompile Include="..\..\..\test\tgaSuite.cpp" />
-    <ClCompile Include="..\..\..\test\tiff_tests.cpp" />
-    <ClCompile Include="..\..\..\test\userTests\userTests.cpp" />
+    <ClCompile Include="$(SrcDir)bmp_tests.cpp" />
+    <ClCompile Include="$(SrcDir)folders.cpp" />
+    <ClCompile Include="$(SrcDir)gif_tests.cpp" />
+    <ClCompile Include="$(SrcDir)jpeg2000_tests.cpp" />
+    <ClCompile Include="$(SrcDir)jpeg_tests.cpp" />
+    <ClCompile Include="$(SrcDir)main.cpp" />
+    <ClCompile Include="$(SrcDir)pcx_tests.cpp" />
+    <ClCompile Include="$(SrcDir)png_tests.cpp" />
+    <ClCompile Include="$(SrcDir)tgaSuite.cpp" />
+    <ClCompile Include="$(SrcDir)tiff_tests.cpp" />
+    <ClCompile Include="$(SrcDir)userTests\userTests.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\..\test\folders.h" />
+    <ClInclude Include="$(SrcDir)folders.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

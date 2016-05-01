@@ -24,123 +24,111 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\..\src\ColorManager.cpp">
+    <ClCompile Include="$(SrcDir)ColorManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\src\Image.cpp">
+    <ClCompile Include="$(SrcDir)Image.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\src\ImageCoder.cpp">
+    <ClCompile Include="$(SrcDir)ImageCoder.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\src\ImageCoderBitmap.cpp">
+    <ClCompile Include="$(SrcDir)ImageCoderBitmap.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\src\ImageCoderGif.cpp">
+    <ClCompile Include="$(SrcDir)ImageCoderGif.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\src\ImageCoderJpeg.cpp">
+    <ClCompile Include="$(SrcDir)ImageCoderJpeg.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\src\ImageCoderJpeg2000.cpp">
+    <ClCompile Include="$(SrcDir)ImageCoderJpeg2000.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\src\ImageCoderPcx.cpp">
+    <ClCompile Include="$(SrcDir)ImageCoderPcx.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\src\ImageCoderPng.cpp">
+    <ClCompile Include="$(SrcDir)ImageCoderPng.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\src\ImageCoderTarga.cpp">
+    <ClCompile Include="$(SrcDir)ImageCoderTarga.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\src\ImageCoderTiff.cpp">
+    <ClCompile Include="$(SrcDir)ImageCoderTiff.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\src\PixelMode.cpp">
+    <ClCompile Include="$(SrcDir)PixelMode.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\src\stdafx.cpp">
+    <ClCompile Include="$(SrcDir)stdafx.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\src\TimeStamper.cpp">
+    <ClCompile Include="$(SrcDir)TimeStamper.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\src\memory_streambuf.cpp">
+    <ClCompile Include="$(SrcDir)memory_streambuf.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\src\userCoders\UserCoder_Springboard.cpp">
-      <Filter>Source Files\userCoders</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\userCoders\ImageCoderDCP.cpp">
-      <Filter>Source Files\userCoders</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\userCoders\ImageCoderDPEG.cpp">
+    <ClCompile Include="$(SrcDir)userCoders\UserCoder_Springboard.cpp">
       <Filter>Source Files\userCoders</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\..\src\win\targetver.h">
+    <ClInclude Include="$(SrcDir)win\targetver.h">
       <Filter>Header Files\win</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\src\ColorManager.h">
+    <ClInclude Include="$(SrcDir)ColorManager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\src\Image.h">
+    <ClInclude Include="$(SrcDir)Image.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\src\ImageCoder.h">
+    <ClInclude Include="$(SrcDir)ImageCoder.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\src\ImageCoderBitmap.h">
+    <ClInclude Include="$(SrcDir)ImageCoderBitmap.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\src\ImageCoderGif.h">
+    <ClInclude Include="$(SrcDir)ImageCoderGif.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\src\ImageCoderJpeg.h">
+    <ClInclude Include="$(SrcDir)ImageCoderJpeg.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\src\ImageCoderJpeg2000.h">
+    <ClInclude Include="$(SrcDir)ImageCoderJpeg2000.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\src\ImageCoderPcx.h">
+    <ClInclude Include="$(SrcDir)ImageCoderPcx.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\src\ImageCoderPng.h">
+    <ClInclude Include="$(SrcDir)ImageCoderPng.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\src\ImageCoderProperties.h">
+    <ClInclude Include="$(SrcDir)ImageCoderProperties.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\src\ImageCoderTarga.h">
+    <ClInclude Include="$(SrcDir)ImageCoderTarga.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\src\ImageCoderTiff.h">
+    <ClInclude Include="$(SrcDir)ImageCoderTiff.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\src\PixelMode.h">
+    <ClInclude Include="$(SrcDir)PixelMode.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\src\stdafx.h">
+    <ClInclude Include="$(SrcDir)stdafx.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\src\TimeStamper.h">
+    <ClInclude Include="$(SrcDir)TimeStamper.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\src\memory_streambuf.h">
+    <ClInclude Include="$(SrcDir)memory_streambuf.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\src\version.h">
+    <ClInclude Include="$(SrcDir)version.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\src\userCoders\UserCoder_Springboard.h">
-      <Filter>Header Files\userCoders</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\src\userCoders\ImageCoderDCP.h">
-      <Filter>Header Files\userCoders</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\src\userCoders\ImageCoderDPEG.h">
+    <ClInclude Include="$(SrcDir)userCoders\UserCoder_Springboard.h">
       <Filter>Header Files\userCoders</Filter>
     </ClInclude>
   </ItemGroup>

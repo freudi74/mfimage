@@ -18,42 +18,42 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\..\test\bmp_tests.cpp">
+    <ClCompile Include="$(SrcDir)bmp_tests.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\test\folders.cpp">
+    <ClCompile Include="$(SrcDir)folders.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\test\gif_tests.cpp">
+    <ClCompile Include="$(SrcDir)gif_tests.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\test\jpeg_tests.cpp">
+    <ClCompile Include="$(SrcDir)jpeg_tests.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\test\jpeg2000_tests.cpp">
+    <ClCompile Include="$(SrcDir)jpeg2000_tests.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\test\main.cpp">
+    <ClCompile Include="$(SrcDir)main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\test\pcx_tests.cpp">
+    <ClCompile Include="$(SrcDir)pcx_tests.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\test\png_tests.cpp">
+    <ClCompile Include="$(SrcDir)png_tests.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\test\tiff_tests.cpp">
+    <ClCompile Include="$(SrcDir)tiff_tests.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\test\userTests\userTests.cpp">
+    <ClCompile Include="$(SrcDir)userTests\userTests.cpp">
       <Filter>Source Files\userTests</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\test\tgaSuite.cpp">
+    <ClCompile Include="$(SrcDir)tgaSuite.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\..\test\folders.h">
+    <ClInclude Include="$(SrcDir)folders.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

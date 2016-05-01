@@ -24,7 +24,11 @@ SUITE(TiffSuite)
 	TEST(TiffLab)
 	{
 		START_TEST();
-		std::list<std::string> testFileNames = { "ColorCheckerCalculator.tif" };
+		std::list<std::string> testFileNames = { 
+			"ColorCheckerCalculator.tif", // from http://www.brucelindbloom.com/
+			"lab 8.tif", // self-made with Adobe Photoshop CC 2015
+			"lab 16.tif", // self-made with Adobe Photoshop CC 2015			
+		};
 		Image img; 
 		// prepare stuff for color conversion
 		Image imgRGB;
