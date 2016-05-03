@@ -68,7 +68,7 @@ ImageEncoding ImageCoder::determineImageType(std::istream & stream)
 			stream.seekg(originalPos);
 			return IE_GIF;
 		}
-		stream.seekg(-4, stream.cur);
+		stream.seekg(-2, stream.cur);
 	}
 
 	////////////////////////////
@@ -115,7 +115,7 @@ ImageEncoding ImageCoder::determineImageType(std::istream & stream)
 			stream.seekg(originalPos);
 			return IE_JPEG2000;
 		}
-		stream.seekg(-4, stream.cur );
+		stream.seekg(-6, stream.cur );
 
 	}
 

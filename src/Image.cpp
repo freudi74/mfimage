@@ -425,7 +425,7 @@ void Image::read(std::istream & stream, const std::string imageName/*=""*/, size
 
 }
 
-void Image::read(const void* imageBuffer, size_t imageBufferSize, const std::string imageName /*= ""*/, size_t subImage /*= 1*/, ImageCoderProperties* props /*= nullptr*/)
+void Image::readFromBuffer(const void* imageBuffer, size_t imageBufferSize, const std::string imageName /*= ""*/, size_t subImage /*= 1*/, ImageCoderProperties* props /*= nullptr*/)
 {
 	// for now we copy, the better solution would be to override streambuf and istream, that avoids a copy. But needs lot of testing.
 	std::istringstream ss(std::string(reinterpret_cast<const char*>(imageBuffer), imageBufferSize));

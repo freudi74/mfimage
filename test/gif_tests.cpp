@@ -46,6 +46,7 @@ TEST(Gif89aRead)
 	imgTransparent.write( TEST_OUT "transbugs.tif", IE_TIFF );
 	Image imgMultipageFirst;
 	imgMultipageFirst.read( TEST_FILES "trnscool.gif" );
+	imgTransparent.write( TEST_OUT "trnscool.tif", IE_TIFF );
 	for ( int i=1; i<=13; i++ )
 	{
 		Image imgMultipageAll;

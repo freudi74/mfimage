@@ -128,7 +128,7 @@ public:
 	* @param subImage          "page number" for multi-image files (such as GIF, TIFF). Will fail if sub image does not exist.
 	* @param props             Optional properties object for (a) setting some behaviour, (b) gathering some values.
 	*/
-	void read( const void* imageBuffer, size_t imageBufferSize, const std::string imageName = "", size_t subImage = 1, ImageCoderProperties* props = nullptr);
+	void readFromBuffer( const void* imageBuffer, size_t imageBufferSize, const std::string imageName = "", size_t subImage = 1, ImageCoderProperties* props = nullptr);
 	
 	/** Writes image to a file.
 	*
