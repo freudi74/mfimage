@@ -40,9 +40,14 @@ bool ImageCoderGif::canEncode( PixelMode pixelMode )
 static const int InterlacedOffset[] = { 0, 4, 2, 1 }; /* The way Interlaced image should. */
 static const int InterlacedJumps[]  = { 8, 8, 4, 2 };    /* be read - offsets and jumps... */
 
-static const int readGifData(GifFileType *, GifByteType *, int)
+static int readGifDataFromStream(GifFileType * gifFile, GifByteType * destBuffer, int length)
 {
-	return 0;	// todo, once we switched to newer GLIB version!
+	std::istream * pStream = reinterpret_cast<std::istream*>(gifFile->UserData);
+	pStream->read( reinterpret_cast<char*>(destBuffer), length );
+	if ( ! pStream->fail() )
+		return length;
+	else
+		return static_cast<int>(pStream->gcount());
 }
 
 void ImageCoderGif::read(std::istream& stream)
@@ -51,39 +56,38 @@ void ImageCoderGif::read(std::istream& stream)
 	// unfortunately, in GIFLIB 5.1.1 and 5.1.2 there is an error in DGifOpen( to be used with a read function )
 	// so we can't use that before switching to a new GIFLIB version...
 	// 
+	std::lock_guard<std::mutex> lock( s_giflibMutex );
 
-	std::string tempFileName = storeStreamToTempFile( stream );
-	read(tempFileName);
+
+	int gifErrorCode = 0;
+
+	GifFileType* gifFilePtr = DGifOpen( &stream, &readGifDataFromStream, &gifErrorCode );
+	if ( gifFilePtr == nullptr )
+	{
+		throw std::runtime_error("ImageCoderGif: Failed to open GIF: " + std::string(GifErrorString(gifErrorCode))/*getLastErrorText()*/ );
+	}
+
+	auto gifFileCloser = [&gifErrorCode]( GifFileType* gifFile ){ if ( gifFile != nullptr ) { DGifCloseFile(gifFile, &gifErrorCode); } };
+	std::unique_ptr<GifFileType, decltype(gifFileCloser)> gifFile( gifFilePtr, gifFileCloser );
+	read( gifFile.get() );
+
 }
 
 
 void ImageCoderGif::read(const std::string& filename)
 {
 	
-	std::lock_guard<std::mutex> lock( s_giflibMutex );
+	std::ifstream stream( filename.data(), std::ifstream::binary );
+	if ( stream.fail() )
+		throw std::runtime_error( "failed to open GIF file " + filename );
 	
-	auto fileCloser = [](FILE* p){ /*if (p!=0) fclose(p);*/ };
-	std::unique_ptr<FILE, decltype(fileCloser)> pFile( fopen(filename.c_str(), "rb"), fileCloser );
-	if ( !pFile )
-	{
-		throw std::runtime_error("ImageCoderGif: Could not open file!");
-	}
-	
-	int gifErrorCode = 0;
-	auto gifFileCloser = [&gifErrorCode]( GifFileType* gif ){ DGifCloseFile(gif, &gifErrorCode); };
-#ifdef _WIN32
-	int fd = ::_fileno(pFile.get());
-#else
-	int fd = ::fileno(pFile.get());
-#endif
-	std::unique_ptr<GifFileType, decltype(gifFileCloser)> gif( DGifOpenFileHandle(fd,&gifErrorCode), gifFileCloser );
+	read( stream );
+}
 
-	if ( !gif )
-	{
-		throw std::runtime_error("ImageCoderGif: Failed to open GIF: " + std::string(GifErrorString(gifErrorCode))/*getLastErrorText()*/ );
-	}
-	
-	image->create( gif->SWidth, gif->SHeight, PixelMode::ARGB8, 72.0, 72.0 );
+void ImageCoderGif::read( void* gifFileAsVoidPtr ) 
+{
+	GifFileType* gifFile = reinterpret_cast<GifFileType*>( gifFileAsVoidPtr );
+	image->create( gifFile->SWidth, gifFile->SHeight, PixelMode::ARGB8, 72.0, 72.0 );
 	
 	// read content of GIF
 	GifRecordType recordType;
@@ -92,9 +96,9 @@ void ImageCoderGif::read(const std::string& filename)
 	bool continueToRead = true;
 	do
 	{
-		if ( GIF_ERROR == DGifGetRecordType( gif.get(), &recordType) )
+		if ( GIF_ERROR == DGifGetRecordType( gifFile, &recordType) )
 		{
-			throw std::runtime_error("ImageCoderGif: Failed to read GIF record type: "+std::string(GifErrorString(gif->Error)) );
+			throw std::runtime_error("ImageCoderGif: Failed to read GIF record type: "+std::string(GifErrorString(gifFile->Error)) );
 			
 		}
 
@@ -106,8 +110,8 @@ void ImageCoderGif::read(const std::string& filename)
 				GifByteType *extension;
 				/* Skip any extension blocks in file: */
 				
-				if ( GIF_ERROR == DGifGetExtension( gif.get(), &extCode, &extension) ) 
-					throw std::runtime_error("ImageCoderGif: Error reading GIF Extension: "+ std::string(GifErrorString(gif->Error)) );
+				if ( GIF_ERROR == DGifGetExtension( gifFile, &extCode, &extension) ) 
+					throw std::runtime_error("ImageCoderGif: Error reading GIF Extension: "+ std::string(GifErrorString(gifFile->Error)) );
 				
 				bool graphicsExtBlock = false;
 				int blockNo = 0;
@@ -129,8 +133,8 @@ void ImageCoderGif::read(const std::string& filename)
 						handleGraphicsExtensionBlock( extension, blockNo, &gce );
   					blockNo++;
 					
-					if ( GIF_ERROR == DGifGetExtensionNext(gif.get(), &extension) )
-						throw std::runtime_error("ImageCoderGif: Error reading GIF Extension: "+ std::string(GifErrorString(gif->Error)) );
+					if ( GIF_ERROR == DGifGetExtensionNext(gifFile, &extension) )
+						throw std::runtime_error("ImageCoderGif: Error reading GIF Extension: "+ std::string(GifErrorString(gifFile->Error)) );
 				}	
 			}
 			break;
@@ -141,45 +145,45 @@ void ImageCoderGif::read(const std::string& filename)
 				{
 					// set background !
 					uint32_t bgARGB;
-					if ( gce.transparencyFlag && gif->SBackGroundColor == gce.transparentColorIndex )
+					if ( gce.transparencyFlag && gifFile->SBackGroundColor == gce.transparentColorIndex )
 					{
 						bgARGB = 0x00ffffff; // transparent white!
 					}
 					else
 					{
-						GifColorType bgColor = gif->SColorMap->Colors[gif->SBackGroundColor];
+						GifColorType bgColor = gifFile->SColorMap->Colors[gifFile->SBackGroundColor];
 						bgARGB = 0xff000000 | bgColor.Red << 16 | bgColor.Green << 8 | bgColor.Blue;
 					}
 					image->fill( &bgARGB );					
 				}
-				if ( GIF_ERROR == DGifGetImageDesc(gif.get()) )
-					throw std::runtime_error("ImageCoderGif: Failed to read GIF Image Desc: "+std::string(GifErrorString(gif->Error)) );
+				if ( GIF_ERROR == DGifGetImageDesc(gifFile) )
+					throw std::runtime_error("ImageCoderGif: Failed to read GIF Image Desc: "+std::string(GifErrorString(gifFile->Error)) );
 
-				int frameTop = gif->Image.Top;
-				int frameLeft = gif->Image.Left;
-				int frameWidth  = gif->Image.Width;
-				int frameHeight = gif->Image.Height;
+				int frameTop = gifFile->Image.Top;
+				int frameLeft = gifFile->Image.Left;
+				int frameWidth  = gifFile->Image.Width;
+				int frameHeight = gifFile->Image.Height;
 				++frameNo;
 				
 	//			GifQprintf("\n%s: Image %d at (%d, %d) [%dx%d]:     ",
 	//				PROGRAM_NAME, ++frameNo, Col, Row, Width, Height);
-				if ( (frameLeft + frameWidth)  > gif->SWidth || (frameTop + frameHeight) > gif->SHeight ) 
+				if ( (frameLeft + frameWidth)  > gifFile->SWidth || (frameTop + frameHeight) > gifFile->SHeight ) 
 					throw std::runtime_error("ImageCoderGif: Frame "+std::to_string(frameNo)+" is not confined to screen dimension, aborted." );
 
 				std::unique_ptr<GifPixelType[]> gifLine( new GifPixelType[frameWidth] );
-				GifColorType* colorTable = (nullptr != gif->Image.ColorMap) ? gif->Image.ColorMap->Colors : gif->SColorMap->Colors;
+				GifColorType* colorTable = (nullptr != gifFile->Image.ColorMap) ? gifFile->Image.ColorMap->Colors : gifFile->SColorMap->Colors;
 				if ( colorTable == nullptr )
 					throw std::runtime_error("ImageCoderGif: Gif Image does not have a colormap." );
 					
-				if ( gif->Image.Interlace ) 
+				if ( gifFile->Image.Interlace ) 
 				{
 					/* Need to perform 4 passes on the images: */
 					for ( size_t iPass=0; iPass<4; iPass++ )
 					{
 						for ( int y = frameTop + InterlacedOffset[iPass]; y < frameTop + frameHeight; y += InterlacedJumps[iPass] )
 						{
-							if ( GIF_ERROR == DGifGetLine( gif.get(), gifLine.get(), frameWidth ) )
-								throw std::runtime_error("ImageCoderGif: Failed to get next line of GIF: "+std::string(GifErrorString(gif->Error)) );
+							if ( GIF_ERROR == DGifGetLine( gifFile, gifLine.get(), frameWidth ) )
+								throw std::runtime_error("ImageCoderGif: Failed to get next line of GIF: "+std::string(GifErrorString(gifFile->Error)) );
 							for ( int x = frameLeft; x < frameLeft + frameWidth; x++ )
 							{
 								unsigned char* imgPixel = reinterpret_cast<unsigned char*>(image->getPixel( y, x ));
@@ -198,8 +202,8 @@ void ImageCoderGif::read(const std::string& filename)
 				else {
 					for ( int y = frameTop; y < frameTop + frameHeight; y ++ )
 					{
-						if ( GIF_ERROR == DGifGetLine( gif.get(), gifLine.get(), frameWidth ) )
-							throw std::runtime_error("ImageCoderGif: Failed to get next line of GIF: "+std::string(GifErrorString(gif->Error)) );
+						if ( GIF_ERROR == DGifGetLine( gifFile, gifLine.get(), frameWidth ) )
+							throw std::runtime_error("ImageCoderGif: Failed to get next line of GIF: "+std::string(GifErrorString(gifFile->Error)) );
 						for ( int x = frameLeft; x < frameLeft + frameWidth; x++ )
 						{
 							unsigned char* imgPixel = reinterpret_cast<unsigned char*>(image->getPixel( y, x ));
@@ -258,6 +262,7 @@ void ImageCoderGif::write(std::ostream& stream)
 	std::lock_guard<std::mutex> lock(s_giflibMutex);
 	throw std::runtime_error("writing GIF files not implemented");
 }
+
 /*
 std::string ImageCoderGif::getLastErrorText()
 {

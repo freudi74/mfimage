@@ -61,12 +61,11 @@
     </GlobalSettings>
     <Configuration Name="Debug" CompilerType="GCC" DebuggerType="GNU gdb debugger" Type="Executable" BuildCmpWithGlobalSettings="append" BuildLnkWithGlobalSettings="append" BuildResWithGlobalSettings="append">
       <Compiler Options="-g;-std=c++14" C_Options="-g" Assembler="" Required="yes" PreCompiledHeader="" PCHInCommandLine="no" PCHFlags="" PCHFlagsPolicy="0">
-        <IncludePath Value="/usr/include/unittest++"/>
         <IncludePath Value="."/>
       </Compiler>
       <Linker Options="" Required="yes">
         <LibraryPath Value="../src/Debug/"/>
-        <Library Value="libUnitTest++.a"/>
+        <Library Value="libUnitTest++"/>
         <Library Value="libmfimage"/>
         <Library Value="libgif"/>
         <Library Value="libjpeg"/>
@@ -117,19 +116,19 @@
     <Configuration Name="Release" CompilerType="GCC" DebuggerType="GNU gdb debugger" Type="Executable" BuildCmpWithGlobalSettings="append" BuildLnkWithGlobalSettings="append" BuildResWithGlobalSettings="append">
       <Compiler Options="-O3;-std=c++14" C_Options="-O3" Assembler="" Required="yes" PreCompiledHeader="" PCHInCommandLine="no" PCHFlags="" PCHFlagsPolicy="0">
         <IncludePath Value="."/>
-        <IncludePath Value="/usr/include/unittest++"/>
       </Compiler>
       <Linker Options="-O2" Required="yes">
         <LibraryPath Value="../src/Release/"/>
-        <LibraryPath Value="../temp/"/>
-        <Library Value="libUnitTest++.a"/>
+        <Library Value="libUnitTest++"/>
         <Library Value="libmfimage"/>
-        <Library Value="libgif_5"/>
+        <Library Value="libgif"/>
         <Library Value="libjpeg"/>
         <Library Value="libtiff"/>
+        <Library Value="libtiffxx"/>
         <Library Value="libpng"/>
         <Library Value="lcms2"/>
         <Library Value="libopenjp2"/>
+        <Library Value="pthread"/>
       </Linker>
       <ResourceCompiler Options="" Required="no"/>
       <General OutputFile="$(IntermediateDirectory)/$(ProjectName)" IntermediateDirectory="Release" Command="./$(ProjectName)" CommandArguments="" UseSeparateDebugArgs="no" DebugArguments="" WorkingDirectory="$(IntermediateDirectory)" PauseExecWhenProcTerminates="yes" IsGUIProgram="no" IsEnabled="yes"/>

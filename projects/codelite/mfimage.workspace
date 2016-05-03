@@ -6,11 +6,11 @@
     <![CDATA[]]>
   </Environment>
   <BuildMatrix>
-    <WorkspaceConfiguration Name="Debug" Selected="yes">
+    <WorkspaceConfiguration Name="Debug" Selected="no">
       <Project Name="mfimage" ConfigName="Debug"/>
       <Project Name="test-mfimage" ConfigName="Debug"/>
     </WorkspaceConfiguration>
-    <WorkspaceConfiguration Name="Release" Selected="no">
+    <WorkspaceConfiguration Name="Release" Selected="yes">
       <Project Name="mfimage" ConfigName="Release"/>
       <Project Name="test-mfimage" ConfigName="Release"/>
     </WorkspaceConfiguration>

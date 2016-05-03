@@ -1,4 +1,8 @@
-#include <unittest++/UnitTest++.h>
+#include <UnitTest++/UnitTest++.h>
+#include <UnitTest++/TestReporterStdout.h>
+#include <UnitTest++/XmlTestReporter.h>
+#include <fstream>
+//#include <unittest++/TestRepo.h>
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
@@ -71,15 +75,19 @@ int main(int argc, char **argv)
 	createFolder( TESTOUT SEPARATOR "libtiffpic" );
 	createFolder( TESTOUT SEPARATOR "pcx" );
 	createFolder( TESTOUT SEPARATOR "png_test_suite" );
-/*	UnitTest::TestReporterStdout reporter;
+
+#if 0
+	std::ofstream xml(TESTOUT SEPARATOR "reports.xml");
+	UnitTest::XmlTestReporter reporter(xml);
 	UnitTest::TestRunner runner(reporter);
-	auto pred = [](Test* t) { 
-        return strcmp(t->m_details.testName, "MyTest") == 0; 
-    }
-	auto predTrue = [](Test* t) { 
+	auto pred = []( UnitTest::Test* t) { 
+        return std::string(t->m_details.testName) == "MyTest"; 
+    };
+	auto predTrue = []( UnitTest::Test* t) { 
         return true; 
-    }
-    return runner.RunTestsIf( UnitTest::Test::GetTestList(), "PngSuite", predTrue, 0 );
-*/	
+    };
+    return runner.RunTestsIf( UnitTest::Test::GetTestList(), 0, predTrue, 0 );
+#else
 	return UnitTest::RunAllTests();
+#endif
 }

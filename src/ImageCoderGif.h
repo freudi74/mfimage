@@ -33,6 +33,7 @@ public:
 private:
 	static std::mutex s_giflibMutex;
 	//std::string getLastErrorText();
+	void read( void* gifFile );
 	
 	typedef struct GraphicsControlExtension {
 		bool transparencyFlag = false;

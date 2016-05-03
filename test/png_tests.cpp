@@ -1,4 +1,4 @@
-#include <unittest++/UnitTest++.h>
+#include <UnitTest++/UnitTest++.h>
 #include <iostream> 
 #include <stdexcept> 
 #include "../src/Image.h"
