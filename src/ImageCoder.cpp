@@ -237,46 +237,46 @@ ImageCoder* ImageCoder::createCoder(ImageEncoding encoding, Image* img, ImageCod
 	case IE_TGA:
 		coder = new ImageCoderTarga(img);
 		break;
-#ifdef CREATE_USER_CODER_1
 	case IE_USER_1:
+#ifdef CREATE_USER_CODER_1
 		coder = CREATE_USER_CODER_1(img);
-		break;
 #endif
-#ifdef CREATE_USER_CODER_2
+		break;
 	case IE_USER_2:
+#ifdef CREATE_USER_CODER_2
 		coder = CREATE_USER_CODER_2(img);
-		break;
 #endif
-#ifdef CREATE_USER_CODER_3
+		break;
 	case IE_USER_3:
+#ifdef CREATE_USER_CODER_3
 		coder = CREATE_USER_CODER_3(img);
-		break;
 #endif
-#ifdef CREATE_USER_CODER_4
+		break;
 	case IE_USER_4:
+#ifdef CREATE_USER_CODER_4
 		coder = CREATE_USER_CODER_4(img);
-		break;
 #endif
-#ifdef CREATE_USER_CODER_5
+		break;
 	case IE_USER_5:
+#ifdef CREATE_USER_CODER_5
 		coder = CREATE_USER_CODER_5(img);
-		break;
 #endif
-#ifdef CREATE_USER_CODER_6
+		break;
 	case IE_USER_6:
+#ifdef CREATE_USER_CODER_6
 		coder = CREATE_USER_CODER_6(img);
-		break;
 #endif
-#ifdef CREATE_USER_CODER_7
+		break;
 	case IE_USER_7:
+#ifdef CREATE_USER_CODER_7
 		coder = CREATE_USER_CODER_7(img);
-		break;
 #endif
-#ifdef CREATE_USER_CODER_8
+		break;
 	case IE_USER_8:
+#ifdef CREATE_USER_CODER_8
 		coder = CREATE_USER_CODER_8(img);
-		break;
 #endif
+		break;
 	}
 
 	if ( coder )

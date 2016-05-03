@@ -3,9 +3,14 @@
 #include <iostream>
 #include <chrono>
 
-#define TESTDATA "/home/marco/dev/build/mfimage/testdata"
-#define TESTOUT  "/home/marco/dev/build/mfimage/test-out"
+#ifdef _WIN32
+#define SEPARATOR "\\"
+#else
 #define SEPARATOR "/"
+#endif
+
+#define TESTDATA ".." SEPARATOR "testdata"
+#define TESTOUT  ".." SEPARATOR "test-out"
 
 void cleanOut();
 void createFolder( const char* folder );
